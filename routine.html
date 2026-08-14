@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Semester Ledger — Deadlines</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,600&family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#161d18;
+    --paper:#0f1512;
+    --card:#1a231d;
+    --line: rgba(232,228,216,0.14);
+    --line-strong: rgba(232,228,216,0.28);
+    --text:#e8e4d8;
+    --text-dim:#9a9border-box;
+    --text-dim2:#9b9788;
+    --amber:#e3a13d;
+
+    --c-pe:#d8735a;
+    --c-pe-dim:#3a2620;
+    --c-mllab:#e3a13d;
+    --c-mllab-dim:#3a2c14;
+    --c-dc:#3fa796;
+    --c-dc-dim:#173430;
+    --c-dclab:#63c2b4;
+    --c-dclab-dim:#173430;
+    --c-idp:#8f7fe8;
+    --c-idp-dim:#241f3d;
+    --c-ml:#d8578f;
+    --c-ml-dim:#341c29;
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0;}
+
+  html{scroll-behavior:smooth;}
+
+  body{
+    background:var(--paper);
+    color:var(--text);
+    font-family:'Space Grotesk', sans-serif;
+    overflow-x:hidden;
+  }
+
+  ::selection{ background:var(--amber); color:#161d18; }
+
+  /* subtle grain / vignette */
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background: radial-gradient(ellipse at 50% -10%, rgba(227,161,61,0.08), transparent 55%);
+    pointer-events:none;
+    z-index:0;
+  }
+
+  header.hero{
+    position:relative;
+    min-height:92vh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding: 8vh 8vw 6vh;
+    border-bottom:1px solid var(--line);
+  }
+
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.78rem;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color:var(--amber);
+    opacity:0;
+    animation: rise 0.8s ease forwards;
+    animation-delay:0.1s;
+  }
+
+  h1.title{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    font-size: clamp(2.6rem, 8vw, 6.2rem);
+    line-height:0.98;
+    letter-spacing:-0.01em;
+    margin-top:1.2rem;
+    color:var(--text);
+    opacity:0;
+    animation: rise 0.9s ease forwards;
+    animation-delay:0.25s;
+  }
+
+  h1.title em{
+    font-style:italic;
+    color:var(--amber);
+  }
+
+  .hero-sub{
+    max-width:520px;
+    margin-top:1.6rem;
+    color:var(--text-dim2);
+    font-size:1.02rem;
+    line-height:1.6;
+    opacity:0;
+    animation: rise 0.9s ease forwards;
+    animation-delay:0.4s;
+  }
+
+  .hero-stats{
+    display:flex;
+    gap: clamp(1.5rem, 4vw, 3.5rem);
+    margin-top: 3.2rem;
+    flex-wrap:wrap;
+    opacity:0;
+    animation: rise 0.9s ease forwards;
+    animation-delay:0.55s;
+  }
+
+  .stat .num{
+    font-family:'Fraunces', serif;
+    font-size:2.4rem;
+    font-weight:500;
+    color:var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+  .stat .lbl{
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.72rem;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--text-dim2);
+    margin-top:0.3rem;
+  }
+
+  .scroll-cue{
+    position:absolute;
+    bottom:5vh; left:8vw;
+    display:flex; align-items:center; gap:0.6rem;
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.72rem;
+    color:var(--text-dim2);
+    letter-spacing:0.08em;
+    opacity:0;
+    animation: rise 0.9s ease forwards, bob 2.4s ease-in-out infinite;
+    animation-delay:0.8s, 1.6s;
+  }
+  .scroll-cue .bar{
+    width:1px; height:28px;
+    background: linear-gradient(var(--amber), transparent);
+  }
+
+  @keyframes rise{
+    from{ opacity:0; transform:translateY(18px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+  @keyframes bob{
+    0%,100%{ transform:translateY(0); }
+    50%{ transform:translateY(6px); }
+  }
+
+  /* legend */
+  .legend{
+    position:relative;
+    display:flex; flex-wrap:wrap; gap: 0.5rem 1.4rem;
+    padding: 2.2rem 8vw;
+    border-bottom:1px solid var(--line);
+    z-index:1;
+  }
+  .legend-item{
+    display:flex; align-items:center; gap:0.5rem;
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.72rem;
+    color:var(--text-dim2);
+    letter-spacing:0.02em;
+  }
+  .dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
+  /* timeline */
+  .timeline{
+    position:relative;
+    padding: 6vh 8vw 14vh;
+    z-index:1;
+  }
+
+  .spine{
+    position:absolute;
+    left: calc(8vw + 78px);
+    top:0; bottom:0;
+    width:1px;
+    background: var(--line);
+  }
+
+  .row{
+    position:relative;
+    display:grid;
+    grid-template-columns: 78px 1fr;
+    gap: 1.6rem;
+    padding: 1.6rem 0;
+    border-bottom:1px solid var(--line);
+    opacity:0;
+    transform: translateY(28px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .row.visible{ opacity:1; transform:translateY(0); }
+
+  .row:last-child{ border-bottom:none; }
+
+  .date-col{
+    display:flex; flex-direction:column; align-items:flex-end;
+    padding-top:0.3rem;
+  }
+  .date-col .day{
+    font-family:'Fraunces', serif;
+    font-size:1.9rem;
+    font-weight:500;
+    line-height:1;
+    color:var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+  .date-col .mon{
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.68rem;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--text-dim2);
+    margin-top:0.3rem;
+  }
+
+  .node{
+    position:absolute;
+    left: calc(78px - 4px);
+    top: 2.4rem;
+    width:9px; height:9px;
+    border-radius:50%;
+    background: var(--amber);
+    box-shadow: 0 0 0 4px var(--paper);
+  }
+
+  .cards{
+    display:flex; flex-direction:column; gap:0.6rem;
+  }
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-left: 3px solid var(--course-color);
+    border-radius:8px;
+    padding: 0.9rem 1.1rem;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:1rem;
+    flex-wrap:wrap;
+    transition: border-color 0.25s ease, transform 0.25s ease, background 0.25s ease;
+  }
+  .card:hover{
+    border-color: var(--course-color);
+    transform: translateX(4px);
+    background:#1f2a22;
+  }
+
+  .card .meta{ min-width:0; }
+  .course-name{
+    font-size:0.68rem;
+    font-family:'JetBrains Mono', monospace;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color: var(--course-color);
+    margin-bottom:0.25rem;
+  }
+  .task-name{
+    font-size:1rem;
+    color:var(--text);
+    font-weight:500;
+  }
+
+  .countdown{
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.72rem;
+    letter-spacing:0.04em;
+    color:var(--text-dim2);
+    background: var(--course-dim);
+    padding:0.32rem 0.7rem;
+    border-radius:100px;
+    white-space:nowrap;
+    flex-shrink:0;
+  }
+  .countdown.urgent{ color:#ff9c8f; }
+  .countdown.today{ color:var(--amber); }
+  .countdown.past{ color:var(--text-dim2); opacity:0.5; }
+
+  footer{
+    padding: 4vh 8vw 6vh;
+    border-top:1px solid var(--line);
+    display:flex; justify-content:space-between; align-items:center;
+    flex-wrap:wrap; gap:1rem;
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.7rem;
+    color:var(--text-dim2);
+    letter-spacing:0.05em;
+    position:relative; z-index:1;
+  }
+
+  @media (max-width:640px){
+    .row{ grid-template-columns: 52px 1fr; gap:1rem; }
+    .spine{ left: calc(8vw + 52px); }
+    .node{ left: calc(52px - 4px); }
+    .date-col .day{ font-size:1.4rem; }
+    .hero-stats{ gap:1.6rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="eyebrow">Summer term · Aug – Sep 2026</div>
+  <h1 class="title">Everything due,<br>in <em>one line</em>.</h1>
+  <div class="hero-stats">
+    <div class="stat"><div class="num" id="statTotal">0</div><div class="lbl">Deadlines</div></div>
+    <div class="stat"><div class="num" id="statCourses">6</div><div class="lbl">Courses</div></div>
+    <div class="stat"><div class="num" id="statNext">—</div><div class="lbl">Days to next</div></div>
+  </div>
+  <div class="scroll-cue"><div class="bar"></div>Scroll</div>
+</header>
+
+<div class="legend" id="legend"></div>
+
+<div class="timeline">
+  <div class="spine"></div>
+  <div id="rows"></div>
+</div>
+
+<footer>
+  <span>Updated live against today's date</span>
+  <span id="todayLabel"></span>
+</footer>
+
+<script>
+const TODAY = new Date(); // always today's real date
+
+const COURSES = {
+  pe:    { label: 'Professional English', color: 'var(--c-pe)', dim: 'var(--c-pe-dim)' },
+  mllab: { label: 'ML lab',                color: 'var(--c-mllab)', dim: 'var(--c-mllab-dim)' },
+  dc:    { label: 'Data communication',    color: 'var(--c-dc)', dim: 'var(--c-dc-dim)' },
+  dclab: { label: 'Data communication lab',color: 'var(--c-dclab)', dim: 'var(--c-dclab-dim)' },
+  idp:   { label: 'IDP II',                color: 'var(--c-idp)', dim: 'var(--c-idp-dim)' },
+  ml:    { label: 'ML',                    color: 'var(--c-ml)', dim: 'var(--c-ml-dim)' },
+};
+
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// grouped by date
+const DATA = [
+  { date: new Date(2026,7,15), items: [ {c:'pe', t:'Speaking test (video submission)'} ] },
+  { date: new Date(2026,7,16), items: [ {c:'pe', t:'CT-2'} ] },
+  { date: new Date(2026,7,17), items: [ {c:'pe', t:'Presentation'} ] },
+  { date: new Date(2026,7,18), items: [ {c:'idp', t:'Lab report 3, 4'} ] },
+  { date: new Date(2026,7,21), items: [ {c:'dc', t:'Presentation'}, {c:'dclab', t:'Lab report 2'} ] },
+  { date: new Date(2026,7,23), items: [ {c:'ml', t:'CT 2'} ] },
+  { date: new Date(2026,7,25), items: [ {c:'idp', t:'Lab report 5'} ] },
+  { date: new Date(2026,7,26), items: [ {c:'idp', t:'Promo video'} ] },
+  { date: new Date(2026,7,30), items: [ {c:'idp', t:'Final project report'} ] },
+  { date: new Date(2026,8,1),  items: [ {c:'dclab', t:'Project report'} ] },
+  { date: new Date(2026,8,10), items: [ {c:'mllab', t:'Lab report 1, 2, 3'} ] },
+];
+
+function daysBetween(a, b){
+  const ms = new Date(b.getFullYear(),b.getMonth(),b.getDate()) - new Date(a.getFullYear(),a.getMonth(),a.getDate());
+  return Math.round(ms / 86400000);
+}
+
+function countdownLabel(d){
+  if (d < 0) return { text: 'Past', cls: 'past' };
+  if (d === 0) return { text: 'Today', cls: 'today' };
+  if (d === 1) return { text: '1 day left', cls: 'urgent' };
+  if (d <= 3) return { text: d + ' days left', cls: 'urgent' };
+  return { text: d + ' days left', cls: '' };
+}
+
+// legend
+const legendEl = document.getElementById('legend');
+Object.values(COURSES).forEach(c=>{
+  const el = document.createElement('div');
+  el.className = 'legend-item';
+  el.innerHTML = `<span class="dot" style="background:${c.color}"></span>${c.label}`;
+  legendEl.appendChild(el);
+});
+
+// rows
+const rowsEl = document.getElementById('rows');
+let totalItems = 0;
+let nextDays = null;
+
+DATA.forEach(group=>{
+  totalItems += group.items.length;
+  const days = daysBetween(TODAY, group.date);
+  if (days >= 0 && (nextDays === null)) nextDays = days;
+
+  const row = document.createElement('div');
+  row.className = 'row';
+  row.innerHTML = `
+    <div class="node"></div>
+    <div class="date-col">
+      <div class="day">${String(group.date.getDate()).padStart(2,'0')}</div>
+      <div class="mon">${MONTHS[group.date.getMonth()]}</div>
+    </div>
+    <div class="cards">
+      ${group.items.map(it=>{
+        const course = COURSES[it.c];
+        const cd = countdownLabel(days);
+        return `<div class="card" style="--course-color:${course.color}; --course-dim:${course.dim}">
+          <div class="meta">
+            <div class="course-name">${course.label}</div>
+            <div class="task-name">${it.t}</div>
+          </div>
+          <div class="countdown ${cd.cls}">${cd.text}</div>
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+  rowsEl.appendChild(row);
+});
+
+document.getElementById('statTotal').textContent = totalItems;
+document.getElementById('statNext').textContent = nextDays === null ? '—' : nextDays;
+document.getElementById('todayLabel').textContent = 'Today — ' + TODAY.getDate() + ' ' + MONTHS[TODAY.getMonth()] + ' ' + TODAY.getFullYear();
+
+// scroll reveal
+const rows = document.querySelectorAll('.row');
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if (e.isIntersecting){
+      e.target.classList.add('visible');
+      io.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.15 });
+rows.forEach(r=>io.observe(r));
+</script>
+</body>
+</html>
