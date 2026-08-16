@@ -404,6 +404,45 @@ const DATA = [
   { date: new Date(2026,8,1),  items: [ {c:'dclab', t:'Project report'},{c:'idp', t:'Poster Presentation'} ] },
   { date: new Date(2026,8,10), items: [ {c:'mllab', t:'Lab report 1, 2, 3'} ] },
 ];
+
+// --- persistence: remember manually-done tasks across reloads ---
+// Keyed by date+course+title (stable even if you reorder DATA later),
+// not by array index (which would shift if tasks are added/removed).
+const STORAGE_KEY = 'semesterLedgerDone';
+
+function taskId(group, item){
+  return group.date.toISOString().slice(0,10) + '|' + item.c + '|' + item.t;
+}
+
+function loadDoneState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  }catch(err){
+    console.warn('Could not read saved progress:', err);
+    return {};
+  }
+}
+
+function saveDoneState(){
+  try{
+    const state = {};
+    DATA.forEach(group => group.items.forEach(item=>{
+      if (item.done) state[taskId(group, item)] = true;
+    }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }catch(err){
+    console.warn('Could not save progress (localStorage unavailable here):', err);
+  }
+}
+
+// apply any saved done-state to DATA before first render
+(function hydrateDoneState(){
+  const saved = loadDoneState();
+  DATA.forEach(group => group.items.forEach(item=>{
+    if (saved[taskId(group, item)]) item.done = true;
+  }));
+})();
  
 function daysBetween(a, b){
   const ms = new Date(b.getFullYear(),b.getMonth(),b.getDate()) - new Date(a.getFullYear(),a.getMonth(),a.getDate());
@@ -416,6 +455,13 @@ function countdownLabel(d){
   if (d === 1) return { text: '1 day left', cls: 'urgent', done: false };
   if (d <= 3) return { text: d + ' days left', cls: 'urgent', done: false };
   return { text: d + ' days left', cls: '', done: false };
+}
+
+// per-item status: done if the deadline already passed OR the user
+// manually marked it done by clicking the card
+function itemStatus(item, days){
+  if (item.done) return { text: '✓ Done', cls: 'past', done: true };
+  return countdownLabel(days);
 }
  
 // legend (static, only needs building once)
@@ -451,14 +497,17 @@ function render(){
   let totalItems = 0;
   let nextDays = null;
 
-  DATA.forEach(group=>{
+  DATA.forEach((group, gi)=>{
     const days = daysBetween(TODAY, group.date);
-    const cd = countdownLabel(days);
-
-    if (!cd.done) totalItems += group.items.length; // only count not-yet-passed deadlines
     if (days >= 0 && (nextDays === null)) nextDays = days;
+
+    // status per item (manual click OR date already passed)
+    const statuses = group.items.map(it => itemStatus(it, days));
+    const groupAllDone = statuses.every(s => s.done);
+    totalItems += statuses.filter(s => !s.done).length;
+
     const row = document.createElement('div');
-    row.className = 'row' + (cd.done ? ' all-done' : '');
+    row.className = 'row' + (groupAllDone ? ' all-done' : '');
     row.innerHTML = `
       <div class="node"></div>
       <div class="date-col">
@@ -466,14 +515,15 @@ function render(){
         <div class="mon">${MONTHS[group.date.getMonth()]}</div>
       </div>
       <div class="cards">
-        ${group.items.map(it=>{
+        ${group.items.map((it, ii)=>{
           const course = COURSES[it.c];
-          return `<div class="card ${cd.done ? 'is-done' : ''}" style="--course-color:${course.color}; --course-dim:${course.dim}">
+          const st = statuses[ii];
+          return `<div class="card ${st.done ? 'is-done' : ''}" data-gi="${gi}" data-ii="${ii}" style="--course-color:${course.color}; --course-dim:${course.dim}; cursor:pointer;">
             <div class="meta">
               <div class="course-name">${course.label}</div>
               <div class="task-name">${it.t}</div>
             </div>
-            <div class="countdown ${cd.cls}">${cd.text}</div>
+            <div class="countdown ${st.cls}">${st.text}</div>
           </div>`;
         }).join('')}
       </div>
@@ -486,6 +536,20 @@ function render(){
   document.getElementById('statNext').textContent = nextDays === null ? '—' : nextDays;
   document.getElementById('todayLabel').textContent = 'Today — ' + TODAY.getDate() + ' ' + MONTHS[TODAY.getMonth()] + ' ' + TODAY.getFullYear();
 }
+
+// click any card to manually toggle done/undone — clicking a card whose
+// real deadline already passed won't change its look, since date-passed
+// always wins visually
+rowsEl.addEventListener('click', (e)=>{
+  const card = e.target.closest('.card');
+  if (!card) return;
+  const gi = Number(card.dataset.gi);
+  const ii = Number(card.dataset.ii);
+  const item = DATA[gi].items[ii];
+  item.done = !item.done;
+  saveDoneState();
+  render();
+});
 
 render();
 
