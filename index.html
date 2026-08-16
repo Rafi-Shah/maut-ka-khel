@@ -49,7 +49,6 @@
  
   ::selection{ background:var(--amber); color:#161d18; }
  
-  /* subtle grain / vignette */
   body::before{
     content:"";
     position:fixed; inset:0;
@@ -160,7 +159,6 @@
     50%{ transform:translateY(6px); }
   }
  
-  /* legend */
   .legend{
     position:relative;
     display:flex; flex-wrap:wrap; gap: 0.5rem 1.4rem;
@@ -177,7 +175,6 @@
   }
   .dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; }
  
-  /* timeline */
   .timeline{
     position:relative;
     padding: 6vh 8vw 14vh;
@@ -282,7 +279,6 @@
     transition: color 0.3s ease, text-decoration-color 0.3s ease;
   }
  
-  /* completed / past-deadline state */
   .card.is-done{
     border-left-color: var(--done);
     background: #161e18;
@@ -364,7 +360,7 @@
   <div class="eyebrow">Summer term · Aug – Sep 2026</div>
   <h1 class="title">Everything due,<br>in <em>one line</em>.</h1>
   <div class="hero-stats">
-    <div class="stat"><div class="num" id="statTotal">0</div><div class="lbl">Deadlines</div></div>
+    <div class="stat"><div class="num" id="statTotal">0</div><div class="lbl">Remaining</div></div>
     <div class="stat"><div class="num" id="statCourses">6</div><div class="lbl">Courses</div></div>
     <div class="stat"><div class="num" id="statNext">—</div><div class="lbl">Days to next</div></div>
   </div>
@@ -384,8 +380,6 @@
 </footer>
  
 <script>
-const TODAY = new Date(); // always today's real date
- 
 const COURSES = {
   pe:    { label: 'Professional English', color: 'var(--c-pe)', dim: 'var(--c-pe-dim)' },
   mllab: { label: 'ML lab',                color: 'var(--c-mllab)', dim: 'var(--c-mllab-dim)' },
@@ -397,7 +391,6 @@ const COURSES = {
  
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
  
-// grouped by date
 const DATA = [
   { date: new Date(2026,7,15), items: [ {c:'pe', t:'Speaking test (video submission)'} ] },
   { date: new Date(2026,7,16), items: [ {c:'pe', t:'CT-2'} ] },
@@ -425,7 +418,7 @@ function countdownLabel(d){
   return { text: d + ' days left', cls: '', done: false };
 }
  
-// legend
+// legend (static, only needs building once)
 const legendEl = document.getElementById('legend');
 Object.values(COURSES).forEach(c=>{
   const el = document.createElement('div');
@@ -434,47 +427,9 @@ Object.values(COURSES).forEach(c=>{
   legendEl.appendChild(el);
 });
  
-// rows
 const rowsEl = document.getElementById('rows');
-let totalItems = 0;
-let nextDays = null;
- 
-DATA.forEach(group=>{
-  totalItems += group.items.length;
-  const days = daysBetween(TODAY, group.date);
-  if (days >= 0 && (nextDays === null)) nextDays = days;
- 
-  const cd = countdownLabel(days);
-  const row = document.createElement('div');
-  row.className = 'row' + (cd.done ? ' all-done' : '');
-  row.innerHTML = `
-    <div class="node"></div>
-    <div class="date-col">
-      <div class="day">${String(group.date.getDate()).padStart(2,'0')}</div>
-      <div class="mon">${MONTHS[group.date.getMonth()]}</div>
-    </div>
-    <div class="cards">
-      ${group.items.map(it=>{
-        const course = COURSES[it.c];
-        return `<div class="card ${cd.done ? 'is-done' : ''}" style="--course-color:${course.color}; --course-dim:${course.dim}">
-          <div class="meta">
-            <div class="course-name">${course.label}</div>
-            <div class="task-name">${it.t}</div>
-          </div>
-          <div class="countdown ${cd.cls}">${cd.text}</div>
-        </div>`;
-      }).join('')}
-    </div>
-  `;
-  rowsEl.appendChild(row);
-});
- 
-document.getElementById('statTotal').textContent = totalItems;
-document.getElementById('statNext').textContent = nextDays === null ? '—' : nextDays;
-document.getElementById('todayLabel').textContent = 'Today — ' + TODAY.getDate() + ' ' + MONTHS[TODAY.getMonth()] + ' ' + TODAY.getFullYear();
- 
-// scroll reveal
-const rows = document.querySelectorAll('.row');
+
+// scroll reveal observer, reused every render
 const io = new IntersectionObserver((entries)=>{
   entries.forEach(e=>{
     if (e.isIntersecting){
@@ -483,7 +438,60 @@ const io = new IntersectionObserver((entries)=>{
     }
   });
 }, { threshold: 0.15 });
-rows.forEach(r=>io.observe(r));
+
+// --- everything below is now wrapped in render() so it can re-run ---
+// This is the fix: TODAY used to be computed once at page load and never
+// touched again, so countdowns/checkmarks froze until you refreshed.
+// render() recomputes TODAY fresh every time it's called.
+function render(){
+  const TODAY = new Date();
+
+  rowsEl.innerHTML = ''; // clear previous render before rebuilding
+
+  let totalItems = 0;
+  let nextDays = null;
+
+  DATA.forEach(group=>{
+    const days = daysBetween(TODAY, group.date);
+    const cd = countdownLabel(days);
+
+    if (!cd.done) totalItems += group.items.length; // only count not-yet-passed deadlines
+    if (days >= 0 && (nextDays === null)) nextDays = days;
+    const row = document.createElement('div');
+    row.className = 'row' + (cd.done ? ' all-done' : '');
+    row.innerHTML = `
+      <div class="node"></div>
+      <div class="date-col">
+        <div class="day">${String(group.date.getDate()).padStart(2,'0')}</div>
+        <div class="mon">${MONTHS[group.date.getMonth()]}</div>
+      </div>
+      <div class="cards">
+        ${group.items.map(it=>{
+          const course = COURSES[it.c];
+          return `<div class="card ${cd.done ? 'is-done' : ''}" style="--course-color:${course.color}; --course-dim:${course.dim}">
+            <div class="meta">
+              <div class="course-name">${course.label}</div>
+              <div class="task-name">${it.t}</div>
+            </div>
+            <div class="countdown ${cd.cls}">${cd.text}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    `;
+    rowsEl.appendChild(row);
+    io.observe(row);
+  });
+
+  document.getElementById('statTotal').textContent = totalItems;
+  document.getElementById('statNext').textContent = nextDays === null ? '—' : nextDays;
+  document.getElementById('todayLabel').textContent = 'Today — ' + TODAY.getDate() + ' ' + MONTHS[TODAY.getMonth()] + ' ' + TODAY.getFullYear();
+}
+
+render();
+
+// re-render periodically so a task rolls over to "Done" without needing
+// a manual refresh (checks every minute; cheap since DATA is tiny)
+setInterval(render, 60 * 1000);
 </script>
 </body>
 </html>
