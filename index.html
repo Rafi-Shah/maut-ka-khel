@@ -116,6 +116,23 @@
     color:var(--text);
     font-variant-numeric: tabular-nums;
   }
+  .stat .sub{
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.66rem;
+    letter-spacing:0.03em;
+    color:var(--amber);
+    margin-top:0.55rem;
+    min-height:1.6em;
+    display:inline-flex;
+    align-items:center;
+    padding:0.28rem 0.65rem;
+    border-radius:100px;
+    background:rgba(227,161,61,0.12);
+    border:1px solid rgba(227,161,61,0.3);
+  }
+  .stat .sub:empty{
+    padding:0; border:none; background:none; min-height:0;
+  }
   .stat .lbl{
     font-family:'JetBrains Mono', monospace;
     font-size:0.72rem;
@@ -346,7 +363,7 @@
   <div class="hero-stats">
     <div class="stat"><div class="num" id="statTotal">0</div><div class="lbl">Remaining</div></div>
     <div class="stat"><div class="num" id="statCourses">6</div><div class="lbl">Courses</div></div>
-    <div class="stat"><div class="num" id="statNext">—</div><div class="lbl">Days to next</div></div>
+    <div class="stat"><div class="num" id="statNext">—</div><div class="lbl">Days to next</div><div class="sub" id="statNextSub"></div></div>
   </div>
   <div class="scroll-cue"><div class="bar"></div>Scroll</div>
 </header>
@@ -437,7 +454,7 @@ function render(){
   rowsEl.innerHTML = '';
 
   let totalItems = 0;
-  let nextDays = null;
+  const remainingDays = []; // days-left value for every undone item, across the whole term
 
   DATA.forEach(group=>{
     const days = daysBetween(TODAY, group.date);
@@ -447,12 +464,12 @@ function render(){
       const manuallyDone = !!window.__manuallyDone[it.id];
       const done = pastDeadline || manuallyDone;
       const cd = done ? { text: '✓ Done', cls: 'past' } : countdownLabel(days);
+      if (!done) remainingDays.push(days);
       return { done, cd, locked: pastDeadline };
     });
 
     const groupAllDone = statuses.every(s => s.done);
     totalItems += statuses.filter(s => !s.done).length;
-    if (!groupAllDone && days >= 0 && nextDays === null) nextDays = days;
 
     const row = document.createElement('div');
     row.className = 'row' + (groupAllDone ? ' all-done' : '');
@@ -483,8 +500,27 @@ function render(){
     io.observe(row);
   });
 
+  // distinct, sorted list of how-many-days-left values across everything not yet done
+  const distinctDays = [...new Set(remainingDays)].sort((a,b)=>a-b);
+
+  const statNextEl = document.getElementById('statNext');
+  const statNextSubEl = document.getElementById('statNextSub');
+
+  if (distinctDays.length === 0){
+    statNextEl.textContent = '—';
+    statNextSubEl.textContent = '';
+  } else if (distinctDays[0] === 0){
+    statNextEl.textContent = 'Today';
+    const following = distinctDays[1];
+    statNextSubEl.textContent = following === undefined
+      ? ''
+      : `Next in ${following} day${following === 1 ? '' : 's'}`;
+  } else {
+    statNextEl.textContent = distinctDays[0];
+    statNextSubEl.textContent = '';
+  }
+
   document.getElementById('statTotal').textContent = totalItems;
-  document.getElementById('statNext').textContent = nextDays === null ? '—' : nextDays;
   document.getElementById('todayLabel').textContent = 'Today — ' + TODAY.getDate() + ' ' + MONTHS[TODAY.getMonth()] + ' ' + TODAY.getFullYear();
 }
 
@@ -539,7 +575,11 @@ setInterval(render, 60 * 1000);
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, (payload) => {
         const row = payload.new && Object.keys(payload.new).length ? payload.new : payload.old;
         if (row && row.id){
-          window.__manuallyDone[row.id] = !!row.done;
+          const incoming = !!row.done;
+          // skip if this is just the server echoing back a change we
+          // already applied locally — avoids a redundant re-render/flash
+          if (window.__manuallyDone[row.id] === incoming) return;
+          window.__manuallyDone[row.id] = incoming;
           if (window.__renderAll) window.__renderAll();
         }
       })
