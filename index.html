@@ -18,7 +18,7 @@
     --text-dim:#9a9border-box;
     --text-dim2:#9b9788;
     --amber:#e3a13d;
- 
+
     --c-pe:#d8735a;
     --c-pe-dim:#3a2620;
     --c-mllab:#e3a13d;
@@ -31,24 +31,21 @@
     --c-idp-dim:#241f3d;
     --c-ml:#d8578f;
     --c-ml-dim:#341c29;
- 
+
     --done:#6f9e78;
     --done-dim:#1c2820;
   }
- 
+
   *{box-sizing:border-box; margin:0; padding:0;}
- 
   html{scroll-behavior:smooth;}
- 
   body{
     background:var(--paper);
     color:var(--text);
     font-family:'Space Grotesk', sans-serif;
     overflow-x:hidden;
   }
- 
   ::selection{ background:var(--amber); color:#161d18; }
- 
+
   body::before{
     content:"";
     position:fixed; inset:0;
@@ -56,7 +53,7 @@
     pointer-events:none;
     z-index:0;
   }
- 
+
   header.hero{
     position:relative;
     min-height:92vh;
@@ -66,7 +63,7 @@
     padding: 8vh 8vw 6vh;
     border-bottom:1px solid var(--line);
   }
- 
+
   .eyebrow{
     font-family:'JetBrains Mono', monospace;
     font-size:0.78rem;
@@ -77,7 +74,7 @@
     animation: rise 0.8s ease forwards;
     animation-delay:0.1s;
   }
- 
+
   h1.title{
     font-family:'Fraunces', serif;
     font-weight:500;
@@ -90,12 +87,8 @@
     animation: rise 0.9s ease forwards;
     animation-delay:0.25s;
   }
- 
-  h1.title em{
-    font-style:italic;
-    color:var(--amber);
-  }
- 
+  h1.title em{ font-style:italic; color:var(--amber); }
+
   .hero-sub{
     max-width:520px;
     margin-top:1.6rem;
@@ -106,7 +99,7 @@
     animation: rise 0.9s ease forwards;
     animation-delay:0.4s;
   }
- 
+
   .hero-stats{
     display:flex;
     gap: clamp(1.5rem, 4vw, 3.5rem);
@@ -116,7 +109,6 @@
     animation: rise 0.9s ease forwards;
     animation-delay:0.55s;
   }
- 
   .stat .num{
     font-family:'Fraunces', serif;
     font-size:2.4rem;
@@ -132,7 +124,7 @@
     color:var(--text-dim2);
     margin-top:0.3rem;
   }
- 
+
   .scroll-cue{
     position:absolute;
     bottom:5vh; left:8vw;
@@ -145,25 +137,15 @@
     animation: rise 0.9s ease forwards, bob 2.4s ease-in-out infinite;
     animation-delay:0.8s, 1.6s;
   }
-  .scroll-cue .bar{
-    width:1px; height:28px;
-    background: linear-gradient(var(--amber), transparent);
-  }
- 
-  @keyframes rise{
-    from{ opacity:0; transform:translateY(18px); }
-    to{ opacity:1; transform:translateY(0); }
-  }
-  @keyframes bob{
-    0%,100%{ transform:translateY(0); }
-    50%{ transform:translateY(6px); }
-  }
- 
+  .scroll-cue .bar{ width:1px; height:28px; background: linear-gradient(var(--amber), transparent); }
+
+  @keyframes rise{ from{ opacity:0; transform:translateY(18px); } to{ opacity:1; transform:translateY(0); } }
+  @keyframes bob{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(6px); } }
+
   .legend{
     position:relative;
     display:flex; flex-wrap:wrap; gap: 0.5rem 1.4rem;
-    padding: 2.2rem 8vw;
-    border-bottom:1px solid var(--line);
+    padding: 2.2rem 8vw 0.6rem;
     z-index:1;
   }
   .legend-item{
@@ -174,13 +156,22 @@
     letter-spacing:0.02em;
   }
   .dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; }
- 
-  .timeline{
-    position:relative;
-    padding: 6vh 8vw 14vh;
-    z-index:1;
+
+  .sync-row{
+    padding: 0 8vw 2rem;
+    border-bottom:1px solid var(--line);
   }
- 
+  .sync-note{
+    font-family:'JetBrains Mono', monospace;
+    font-size:0.66rem;
+    color:var(--text-dim2);
+    display:flex; align-items:center; gap:0.4rem;
+  }
+  .sync-dot{ width:6px; height:6px; border-radius:50%; background:var(--done); }
+  .sync-dot.off{ background:#c96a5a; }
+
+  .timeline{ position:relative; padding: 6vh 8vw 14vh; z-index:1; }
+
   .spine{
     position:absolute;
     left: calc(8vw + 78px);
@@ -188,7 +179,7 @@
     width:1px;
     background: var(--line);
   }
- 
+
   .row{
     position:relative;
     display:grid;
@@ -201,9 +192,8 @@
     transition: opacity 0.7s ease, transform 0.7s ease;
   }
   .row.visible{ opacity:1; transform:translateY(0); }
- 
   .row:last-child{ border-bottom:none; }
- 
+
   .date-col{
     display:flex; flex-direction:column; align-items:flex-end;
     padding-top:0.3rem;
@@ -227,7 +217,7 @@
     margin-top:0.3rem;
     white-space:nowrap;
   }
- 
+
   .node{
     position:absolute;
     left: calc(78px - 4px);
@@ -237,12 +227,9 @@
     background: var(--amber);
     box-shadow: 0 0 0 4px var(--paper);
   }
- 
-  .cards{
-    display:flex; flex-direction:column; gap:0.6rem;
-    min-width:0;
-  }
- 
+
+  .cards{ display:flex; flex-direction:column; gap:0.6rem; min-width:0; }
+
   .card{
     background:var(--card);
     border:1px solid var(--line);
@@ -254,15 +241,31 @@
     align-items:center;
     gap:1rem;
     flex-wrap:wrap;
+    cursor:pointer;
     transition: border-color 0.25s ease, transform 0.25s ease, background 0.25s ease;
   }
-  .card:hover{
-    border-color: var(--course-color);
-    transform: translateX(4px);
-    background:#1f2a22;
+  .card:hover{ border-color: var(--course-color); transform: translateX(4px); background:#1f2a22; }
+  .card.locked{ cursor:default; }
+  .card.locked:hover{ transform:none; }
+
+  .card-left{ display:flex; align-items:center; gap:0.8rem; min-width:0; }
+
+  .check-toggle{
+    width:20px; height:20px;
+    border-radius:6px;
+    border:1.5px solid var(--line-strong);
+    background:transparent;
+    flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    transition: all 0.2s ease;
+    color:transparent;
+    font-size:0.72rem;
+    pointer-events:none;
   }
- 
-  .card .meta{ min-width:0; }
+  .card:hover .check-toggle{ border-color:var(--course-color); }
+  .card.is-done .check-toggle{ background: var(--done); border-color: var(--done); color:#0f1512; }
+
+  .meta{ min-width:0; }
   .course-name{
     font-size:0.68rem;
     font-family:'JetBrains Mono', monospace;
@@ -278,35 +281,19 @@
     font-weight:500;
     transition: color 0.3s ease, text-decoration-color 0.3s ease;
   }
- 
-  .card.is-done{
-    border-left-color: var(--done);
-    background: #161e18;
-  }
-  .card.is-done:hover{
-    border-color: var(--done);
-  }
-  .card.is-done .course-name{
-    color: var(--text-dim2);
-  }
+
+  .card.is-done{ border-left-color: var(--done); background: #161e18; }
+  .card.is-done:hover{ border-color: var(--done); }
+  .card.is-done .course-name{ color: var(--text-dim2); }
   .card.is-done .task-name{
     color: var(--text-dim2);
     text-decoration: line-through;
     text-decoration-color: var(--text-dim2);
     text-decoration-thickness: 1.5px;
   }
-  .card.is-done .check{
-    display:inline-flex;
-    color: var(--done);
-    margin-right:0.4em;
-  }
-  .row.all-done .day, .row.all-done .mon{
-    opacity:0.4;
-  }
-  .row.all-done .node{
-    background: var(--done);
-  }
- 
+  .row.all-done .day, .row.all-done .mon{ opacity:0.4; }
+  .row.all-done .node{ background: var(--done); }
+
   .countdown{
     font-family:'JetBrains Mono', monospace;
     font-size:0.72rem;
@@ -320,11 +307,8 @@
   }
   .countdown.urgent{ color:#ff9c8f; }
   .countdown.today{ color:var(--amber); }
-  .countdown.past{
-    color: var(--done);
-    background: var(--done-dim) !important;
-  }
- 
+  .countdown.past{ color: var(--done); background: var(--done-dim) !important; }
+
   footer{
     padding: 4vh 8vw 6vh;
     border-top:1px solid var(--line);
@@ -336,7 +320,7 @@
     letter-spacing:0.05em;
     position:relative; z-index:1;
   }
- 
+
   @media (max-width:640px){
     .row{ grid-template-columns: 66px 1fr; gap:0.9rem; padding:1.3rem 0; }
     .spine{ left: calc(8vw + 66px); }
@@ -348,14 +332,14 @@
     .card{ padding:0.8rem 0.9rem; }
     .task-name{ font-size:0.92rem; }
   }
- 
+
   @media (prefers-reduced-motion: reduce){
     *{ animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; }
   }
 </style>
 </head>
 <body>
- 
+
 <header class="hero">
   <div class="eyebrow">Summer term · Aug – Sep 2026</div>
   <h1 class="title">Everything due,<br>in <em>one line</em>.</h1>
@@ -366,19 +350,22 @@
   </div>
   <div class="scroll-cue"><div class="bar"></div>Scroll</div>
 </header>
- 
+
 <div class="legend" id="legend"></div>
- 
+<div class="sync-row">
+  <div class="sync-note" id="syncNote"><span class="sync-dot off" id="syncDot"></span><span id="syncText">Connecting…</span></div>
+</div>
+
 <div class="timeline">
   <div class="spine"></div>
   <div id="rows"></div>
 </div>
- 
+
 <footer>
   <span>Updated live against today's date</span>
   <span id="todayLabel"></span>
 </footer>
- 
+
 <script>
 const COURSES = {
   pe:    { label: 'Professional English', color: 'var(--c-pe)', dim: 'var(--c-pe-dim)' },
@@ -388,86 +375,44 @@ const COURSES = {
   idp:   { label: 'IDP II',                color: 'var(--c-idp)', dim: 'var(--c-idp-dim)' },
   ml:    { label: 'ML',                    color: 'var(--c-ml)', dim: 'var(--c-ml-dim)' },
 };
- 
+
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
- 
+
+// grouped by date — each item has a stable unique id (used as the Supabase row id)
 const DATA = [
-  { date: new Date(2026,7,15), items: [ {c:'pe', t:'Speaking test (video submission)'} ] },
-  { date: new Date(2026,7,16), items: [ {c:'pe', t:'CT-2'} ] },
-  { date: new Date(2026,7,17), items: [ {c:'pe', t:'Presentation'} ] },
-  { date: new Date(2026,7,18), items: [ {c:'idp', t:'Lab report 3, 4'},{c:'idp', t:'Poster Submit'} ] },
-  { date: new Date(2026,7,20), items: [ {c:'ml', t:'Presentation'} ] },
-  { date: new Date(2026,7,21), items: [ {c:'dc', t:'Presentation'}, {c:'dclab', t:'Lab report 2'} ] },
-  { date: new Date(2026,7,23), items: [ {c:'pe', t:'Listening test'}, {c:'ml', t:'CT 2'} ] },
-  { date: new Date(2026,7,24), items: [ {c:'dclab', t:'Project Preseantion'} ] },
-  { date: new Date(2026,7,25), items: [ {c:'idp', t:'Lab report 5'} ] },
-  { date: new Date(2026,7,26), items: [ {c:'idp', t:'Promo video'} ] },
-  { date: new Date(2026,7,30), items: [ {c:'idp', t:'Final project report'} ] },
-  { date: new Date(2026,7,31), items: [ {c:'dclab', t:'Lab Final'} ] },
-  { date: new Date(2026,8,1),  items: [ {c:'dclab', t:'Project report'},{c:'idp', t:'Poster Presentation'} ] },
-  { date: new Date(2026,8,10), items: [ {c:'mllab', t:'Lab report 1, 2, 3'} ] },
+  { date: new Date(2026,7,15), items: [ {id:'pe-speaking', c:'pe', t:'Speaking test (video submission)'} ] },
+  { date: new Date(2026,7,16), items: [ {id:'pe-ct2', c:'pe', t:'CT-2'} ] },
+  { date: new Date(2026,7,17), items: [ {id:'pe-presentation', c:'pe', t:'Presentation'} ] },
+  { date: new Date(2026,7,18), items: [ {id:'idp-lab34', c:'idp', t:'Lab report 3, 4'}, {id:'idp-poster-submit', c:'idp', t:'Poster Submit'} ] },
+  { date: new Date(2026,7,20), items: [ {id:'ml-presentation', c:'ml', t:'Presentation'} ] },
+  { date: new Date(2026,7,21), items: [ {id:'dc-presentation', c:'dc', t:'Presentation'}, {id:'dclab-lab2', c:'dclab', t:'Lab report 2'} ] },
+  { date: new Date(2026,7,23), items: [ {id:'pe-listening', c:'pe', t:'Listening test'}, {id:'ml-ct2', c:'ml', t:'CT 2'} ] },
+  { date: new Date(2026,7,24), items: [ {id:'dclab-project-presentation', c:'dclab', t:'Project Presentation'} ] },
+  { date: new Date(2026,7,25), items: [ {id:'idp-lab5', c:'idp', t:'Lab report 5'} ] },
+  { date: new Date(2026,7,26), items: [ {id:'idp-promo', c:'idp', t:'Promo video'} ] },
+  { date: new Date(2026,7,30), items: [ {id:'idp-final-report', c:'idp', t:'Final project report'} ] },
+  { date: new Date(2026,7,31), items: [ {id:'dclab-lab-final', c:'dclab', t:'Lab Final'} ] },
+  { date: new Date(2026,8,1),  items: [ {id:'dclab-project-report', c:'dclab', t:'Project report'}, {id:'idp-poster-presentation', c:'idp', t:'Poster Presentation'} ] },
+  { date: new Date(2026,8,10), items: [ {id:'mllab-labs123', c:'mllab', t:'Lab report 1, 2, 3'} ] },
 ];
 
-// --- persistence: remember manually-done tasks across reloads ---
-// Keyed by date+course+title (stable even if you reorder DATA later),
-// not by array index (which would shift if tasks are added/removed).
-const STORAGE_KEY = 'semesterLedgerDone';
-
-function taskId(group, item){
-  return group.date.toISOString().slice(0,10) + '|' + item.c + '|' + item.t;
-}
-
-function loadDoneState(){
-  try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : {};
-  }catch(err){
-    console.warn('Could not read saved progress:', err);
-    return {};
-  }
-}
-
-function saveDoneState(){
-  try{
-    const state = {};
-    DATA.forEach(group => group.items.forEach(item=>{
-      if (item.done) state[taskId(group, item)] = true;
-    }));
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  }catch(err){
-    console.warn('Could not save progress (localStorage unavailable here):', err);
-  }
-}
-
-// apply any saved done-state to DATA before first render
-(function hydrateDoneState(){
-  const saved = loadDoneState();
-  DATA.forEach(group => group.items.forEach(item=>{
-    if (saved[taskId(group, item)]) item.done = true;
-  }));
-})();
- 
 function daysBetween(a, b){
   const ms = new Date(b.getFullYear(),b.getMonth(),b.getDate()) - new Date(a.getFullYear(),a.getMonth(),a.getDate());
   return Math.round(ms / 86400000);
 }
- 
+
 function countdownLabel(d){
-  if (d < 0) return { text: '✓ Done', cls: 'past', done: true };
-  if (d === 0) return { text: 'Today', cls: 'today', done: false };
-  if (d === 1) return { text: '1 day left', cls: 'urgent', done: false };
-  if (d <= 3) return { text: d + ' days left', cls: 'urgent', done: false };
-  return { text: d + ' days left', cls: '', done: false };
+  if (d < 0) return { text: '✓ Done', cls: 'past' };
+  if (d === 0) return { text: 'Today', cls: 'today' };
+  if (d === 1) return { text: '1 day left', cls: 'urgent' };
+  if (d <= 3) return { text: d + ' days left', cls: 'urgent' };
+  return { text: d + ' days left', cls: '' };
 }
 
-// per-item status: done if the deadline already passed OR the user
-// manually marked it done by clicking the card
-function itemStatus(item, days){
-  if (item.done) return { text: '✓ Done', cls: 'past', done: true };
-  return countdownLabel(days);
-}
- 
-// legend (static, only needs building once)
+// shared "done" state, filled from Supabase (falls back to empty = nothing manually done yet)
+window.__manuallyDone = {};
+
+// legend (static, built once)
 const legendEl = document.getElementById('legend');
 Object.values(COURSES).forEach(c=>{
   const el = document.createElement('div');
@@ -475,10 +420,9 @@ Object.values(COURSES).forEach(c=>{
   el.innerHTML = `<span class="dot" style="background:${c.color}"></span>${c.label}`;
   legendEl.appendChild(el);
 });
- 
+
 const rowsEl = document.getElementById('rows');
 
-// scroll reveal observer, reused every render
 const io = new IntersectionObserver((entries)=>{
   entries.forEach(e=>{
     if (e.isIntersecting){
@@ -488,26 +432,27 @@ const io = new IntersectionObserver((entries)=>{
   });
 }, { threshold: 0.15 });
 
-// --- everything below is now wrapped in render() so it can re-run ---
-// This is the fix: TODAY used to be computed once at page load and never
-// touched again, so countdowns/checkmarks froze until you refreshed.
-// render() recomputes TODAY fresh every time it's called.
 function render(){
   const TODAY = new Date();
-
-  rowsEl.innerHTML = ''; // clear previous render before rebuilding
+  rowsEl.innerHTML = '';
 
   let totalItems = 0;
   let nextDays = null;
 
-  DATA.forEach((group, gi)=>{
+  DATA.forEach(group=>{
     const days = daysBetween(TODAY, group.date);
-    if (days >= 0 && (nextDays === null)) nextDays = days;
+    const pastDeadline = days < 0;
 
-    // status per item (manual click OR date already passed)
-    const statuses = group.items.map(it => itemStatus(it, days));
+    const statuses = group.items.map(it=>{
+      const manuallyDone = !!window.__manuallyDone[it.id];
+      const done = pastDeadline || manuallyDone;
+      const cd = done ? { text: '✓ Done', cls: 'past' } : countdownLabel(days);
+      return { done, cd, locked: pastDeadline };
+    });
+
     const groupAllDone = statuses.every(s => s.done);
     totalItems += statuses.filter(s => !s.done).length;
+    if (!groupAllDone && days >= 0 && nextDays === null) nextDays = days;
 
     const row = document.createElement('div');
     row.className = 'row' + (groupAllDone ? ' all-done' : '');
@@ -521,12 +466,15 @@ function render(){
         ${group.items.map((it, ii)=>{
           const course = COURSES[it.c];
           const st = statuses[ii];
-          return `<div class="card ${st.done ? 'is-done' : ''}" data-gi="${gi}" data-ii="${ii}" style="--course-color:${course.color}; --course-dim:${course.dim}; cursor:pointer;">
-            <div class="meta">
-              <div class="course-name">${course.label}</div>
-              <div class="task-name">${it.t}</div>
+          return `<div class="card ${st.done ? 'is-done' : ''} ${st.locked ? 'locked' : ''}" data-id="${it.id}" style="--course-color:${course.color}; --course-dim:${course.dim};">
+            <div class="card-left">
+              <span class="check-toggle">✓</span>
+              <div class="meta">
+                <div class="course-name">${course.label}</div>
+                <div class="task-name">${it.t}</div>
+              </div>
             </div>
-            <div class="countdown ${st.cls}">${st.text}</div>
+            <div class="countdown ${st.cd.cls}">${st.cd.text}</div>
           </div>`;
         }).join('')}
       </div>
@@ -540,25 +488,77 @@ function render(){
   document.getElementById('todayLabel').textContent = 'Today — ' + TODAY.getDate() + ' ' + MONTHS[TODAY.getMonth()] + ' ' + TODAY.getFullYear();
 }
 
-// click any card to manually toggle done/undone — clicking a card whose
-// real deadline already passed won't change its look, since date-passed
-// always wins visually
+// click any (non-past-deadline) card to toggle done/undone — saved to Supabase for everyone
 rowsEl.addEventListener('click', (e)=>{
   const card = e.target.closest('.card');
-  if (!card) return;
-  const gi = Number(card.dataset.gi);
-  const ii = Number(card.dataset.ii);
-  const item = DATA[gi].items[ii];
-  item.done = !item.done;
-  saveDoneState();
-  render();
+  if (!card || card.classList.contains('locked')) return;
+  const id = card.dataset.id;
+  const newVal = !window.__manuallyDone[id];
+  if (window.__setTaskDone) window.__setTaskDone(id, newVal);
 });
 
 render();
+window.__renderAll = render;
 
-// re-render periodically so a task rolls over to "Done" without needing
-// a manual refresh (checks every minute; cheap since DATA is tiny)
+// re-render every minute so a task rolls over to "Done" automatically at midnight
 setInterval(render, 60 * 1000);
+</script>
+
+<!-- Supabase: shared "Done" state across everyone who opens this link -->
+<script type="module">
+  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+  // 🔧 REPLACE with your own Supabase project values (Project Settings > API)
+  const SUPABASE_URL = "https://ttsfmbshanyieohqwbey.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0c2ZtYnNoYW55aWVvaHF3YmV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcyMDg3NTAsImV4cCI6MjEwMjc4NDc1MH0.PQVE4NSh_W6YQbd7QelebEa0g7QW8_u-InNWM9GVHzU";
+
+  const syncDot = document.getElementById('syncDot');
+  const syncText = document.getElementById('syncText');
+
+  try {
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function loadInitial(){
+      const { data, error } = await supabase.from('tasks').select('id, done');
+      if (error) throw error;
+      const map = {};
+      (data || []).forEach(row => { map[row.id] = !!row.done; });
+      window.__manuallyDone = map;
+      if (window.__renderAll) window.__renderAll();
+      syncDot.classList.remove('off');
+      syncText.textContent = 'Synced — changes save for everyone';
+    }
+
+    loadInitial().catch(err=>{
+      console.error(err);
+      syncText.textContent = 'Could not connect to database';
+    });
+
+    supabase
+      .channel('tasks-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, (payload) => {
+        const row = payload.new && Object.keys(payload.new).length ? payload.new : payload.old;
+        if (row && row.id){
+          window.__manuallyDone[row.id] = !!row.done;
+          if (window.__renderAll) window.__renderAll();
+        }
+      })
+      .subscribe();
+
+    window.__setTaskDone = async (id, val) => {
+      window.__manuallyDone[id] = val;
+      if (window.__renderAll) window.__renderAll();
+      try {
+        const { error } = await supabase.from('tasks').upsert({ id, done: val });
+        if (error) throw error;
+      } catch (err) {
+        console.error("Failed to save:", err);
+      }
+    };
+  } catch (err) {
+    console.error(err);
+    syncText.textContent = 'Database not configured yet';
+  }
 </script>
 </body>
 </html>
