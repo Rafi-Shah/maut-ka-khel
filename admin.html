@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Portal — Maut Ka Khel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --paper: #0c110e;
+      --card: #151d18;
+      --card-hover: #1c2720;
+      --card-border: rgba(232, 228, 216, 0.12);
+      --text: #e8e4d8;
+      --text-dim: #9b9788;
+      --amber: #e3a13d;
+      --amber-dim: rgba(227, 161, 61, 0.14);
+      --amber-hover: #f3ad43;
+      --done: #6f9e78;
+      --done-dim: #1c2820;
+      --danger: #e06c75;
+      --danger-dim: rgba(224, 108, 117, 0.15);
+      --line: rgba(232, 228, 216, 0.1);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--paper);
+      color: var(--text);
+      font-family: 'Space Grotesk', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    body::before {
+      content: "";
+      position: fixed; inset: 0;
+      background: radial-gradient(ellipse at 50% -10%, rgba(227,161,61,0.06), transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Auth Screen */
+    #authScreen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+    .login-box {
+      width: 100%;
+      max-width: 420px;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 2.4rem 2.2rem;
+      box-shadow: 0 20px 45px rgba(0,0,0,0.45);
+      position: relative; z-index: 1;
+    }
+
+    /* Portal Screen (hidden until logged in) */
+    #portalScreen {
+      display: none;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    /* Header Nav */
+    header.portal-nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(12, 17, 14, 0.88);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--line);
+      padding: 0.9rem 6vw;
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 1.5rem; flex-wrap: wrap;
+    }
+    .nav-brand { display: flex; align-items: center; gap: 0.75rem; }
+    .brand-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--amber); box-shadow: 0 0 10px var(--amber);
+    }
+    .brand-title {
+      font-family: 'Fraunces', serif; font-size: 1.35rem; font-weight: 500;
+      color: var(--text);
+    }
+    .brand-tag {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      padding: 0.2rem 0.55rem; border-radius: 4px;
+      background: var(--amber-dim); color: var(--amber);
+      border: 1px solid rgba(227, 161, 61, 0.25);
+    }
+    .nav-actions { display: flex; align-items: center; gap: 0.8rem; }
+
+    .btn {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.85rem; font-weight: 500;
+      padding: 0.55rem 1rem; border-radius: 6px;
+      display: inline-flex; align-items: center; gap: 0.45rem;
+      cursor: pointer; text-decoration: none;
+      border: 1px solid var(--card-border);
+      transition: all 0.2s ease;
+      background: transparent; color: var(--text);
+    }
+    .btn:hover { border-color: var(--amber); color: var(--amber); }
+    .btn-primary {
+      background: var(--amber); color: #121814;
+      border-color: var(--amber); font-weight: 600;
+    }
+    .btn-primary:hover {
+      background: var(--amber-hover); color: #0d120f;
+      transform: translateY(-1px);
+    }
+    .btn-danger { color: var(--danger); border-color: rgba(224, 108, 117, 0.3); }
+    .btn-danger:hover { background: var(--danger-dim); border-color: var(--danger); }
+
+    /* Main Container */
+    main.portal-main {
+      position: relative; z-index: 1;
+      padding: 2.2rem 6vw 5rem;
+      flex: 1; max-width: 1350px; margin: 0 auto; width: 100%;
+    }
+
+    /* Stats Ribbon */
+    .stats-ribbon {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.2rem;
+      margin-bottom: 2.5rem;
+    }
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 1.25rem 1.4rem;
+      display: flex; flex-direction: column;
+      position: relative; overflow: hidden;
+    }
+    .stat-card::after {
+      content: ""; position: absolute;
+      left: 0; top: 0; bottom: 0; width: 3px;
+      background: var(--stat-color, var(--amber));
+    }
+    .stat-val {
+      font-family: 'Fraunces', serif;
+      font-size: 2.1rem; font-weight: 500;
+      color: var(--text); line-height: 1.1;
+    }
+    .stat-name {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--text-dim);
+      margin-top: 0.4rem;
+    }
+
+    /* Tabs Bar */
+    .tabs-bar {
+      display: flex; gap: 0.5rem;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 1.8rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .tab-btn {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem; letter-spacing: 0.04em;
+      padding: 0.75rem 1.2rem;
+      border: none; background: none; color: var(--text-dim);
+      border-bottom: 2px solid transparent;
+      cursor: pointer; display: flex; align-items: center; gap: 0.5rem;
+      transition: all 0.2s ease; white-space: nowrap;
+    }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active {
+      color: var(--amber); border-bottom-color: var(--amber);
+      font-weight: 600;
+    }
+    .tab-count {
+      font-size: 0.68rem; padding: 0.15rem 0.45rem;
+      border-radius: 100px; background: rgba(232, 228, 216, 0.08);
+      color: var(--text-dim);
+    }
+    .tab-btn.active .tab-count {
+      background: var(--amber-dim); color: var(--amber);
+    }
+
+    /* Sections */
+    .section-content { display: none; }
+    .section-content.active { display: block; }
+
+    /* Actions Header */
+    .controls-header {
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 1rem; flex-wrap: wrap; margin-bottom: 1.4rem;
+    }
+    .search-filter-row {
+      display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;
+    }
+    .search-input {
+      background: #111713;
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      padding: 0.55rem 0.9rem;
+      color: var(--text); font-family: inherit; font-size: 0.88rem;
+      min-width: 240px; outline: none;
+    }
+    .search-input:focus { border-color: var(--amber); }
+    .filter-select {
+      background: #111713;
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      padding: 0.55rem 0.8rem;
+      color: var(--text); font-family: inherit; font-size: 0.85rem;
+      outline: none; cursor: pointer;
+    }
+    .filter-select:focus { border-color: var(--amber); }
+
+    /* Task Table */
+    .table-container {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    table.data-table {
+      width: 100%; border-collapse: collapse; text-align: left;
+    }
+    table.data-table th {
+      background: rgba(0, 0, 0, 0.25);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--text-dim);
+      padding: 0.85rem 1.1rem;
+      border-bottom: 1px solid var(--line);
+    }
+    table.data-table td {
+      padding: 0.9rem 1.1rem;
+      border-bottom: 1px solid var(--line);
+      font-size: 0.9rem; vertical-align: middle;
+    }
+    table.data-table tr:last-child td { border-bottom: none; }
+    table.data-table tr:hover td { background: rgba(255, 255, 255, 0.02); }
+
+    /* Course Pill & Badges */
+    .course-pill {
+      display: inline-flex; align-items: center; gap: 0.45rem;
+      font-family: 'JetBrains Mono', monospace; font-size: 0.72rem;
+      padding: 0.25rem 0.65rem; border-radius: 100px;
+      font-weight: 500;
+    }
+    .status-badge {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
+      padding: 0.22rem 0.55rem; border-radius: 100px;
+      display: inline-flex; align-items: center; gap: 0.35rem;
+    }
+    .status-badge.done {
+      background: var(--done-dim); color: var(--done);
+    }
+    .status-badge.pending {
+      background: rgba(227, 161, 61, 0.12); color: var(--amber);
+    }
+    .status-badge.urgent {
+      background: rgba(224, 108, 117, 0.15); color: #ff9c8f;
+    }
+
+    .done-toggle-btn {
+      width: 24px; height: 24px; border-radius: 6px;
+      border: 1.5px solid var(--card-border);
+      background: transparent; color: transparent;
+      display: inline-flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.2s ease;
+      font-size: 0.75rem;
+    }
+    .done-toggle-btn:hover { border-color: var(--amber); }
+    .done-toggle-btn.is-checked {
+      background: var(--done); border-color: var(--done); color: #0c110e;
+    }
+
+    /* Course Grid */
+    .courses-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.25rem;
+    }
+    .course-item-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 10px; padding: 1.35rem;
+      display: flex; flex-direction: column; gap: 1rem;
+      border-left: 4px solid var(--c-color);
+      transition: transform 0.2s ease;
+    }
+    .course-item-card:hover { transform: translateY(-2px); }
+    .course-card-top {
+      display: flex; justify-content: space-between; align-items: flex-start;
+    }
+    .course-code-badge {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
+      color: var(--c-color); background: var(--c-dim);
+      padding: 0.2rem 0.5rem; border-radius: 4px;
+      letter-spacing: 0.05em; text-transform: uppercase;
+    }
+    .course-name-text {
+      font-size: 1.1rem; font-weight: 600; color: var(--text);
+      margin-top: 0.4rem;
+    }
+
+    /* Settings Form */
+    .settings-panel {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 10px; padding: 2rem;
+      max-width: 680px;
+    }
+    .form-group { margin-bottom: 1.4rem; }
+    .form-group label {
+      display: block; font-family: 'JetBrains Mono', monospace;
+      font-size: 0.76rem; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--text-dim);
+      margin-bottom: 0.45rem;
+    }
+    .form-control {
+      width: 100%; background: #111713;
+      border: 1px solid var(--card-border);
+      border-radius: 6px; padding: 0.75rem 0.95rem;
+      color: var(--text); font-family: inherit; font-size: 0.92rem;
+      outline: none; transition: border-color 0.2s ease;
+    }
+    .form-control:focus { border-color: var(--amber); }
+
+    /* Modal Backdrop & Window */
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(5px); z-index: 999;
+      display: none; align-items: center; justify-content: center;
+      padding: 1.5rem;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal-dialog {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 12px; width: 100%; max-width: 500px;
+      padding: 1.8rem; box-shadow: 0 25px 60px rgba(0,0,0,0.6);
+      position: relative;
+    }
+    .modal-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 1.4rem;
+    }
+    .modal-title {
+      font-family: 'Fraunces', serif; font-size: 1.4rem; font-weight: 500;
+      color: var(--text);
+    }
+    .modal-close {
+      background: none; border: none; color: var(--text-dim);
+      font-size: 1.3rem; cursor: pointer; padding: 0.2rem;
+    }
+    .modal-close:hover { color: var(--text); }
+    .modal-footer {
+      display: flex; justify-content: flex-end; gap: 0.65rem;
+      margin-top: 1.6rem;
+    }
+
+    /* Toast Notification */
+    .toast-container {
+      position: fixed; bottom: 24px; right: 24px; z-index: 10000;
+      display: flex; flex-direction: column; gap: 0.6rem;
+    }
+    .toast-msg {
+      background: #17221b;
+      border: 1px solid var(--amber);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 0.8rem 1.2rem;
+      font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      animation: toastIn 0.3s ease;
+      display: flex; align-items: center; gap: 0.6rem;
+    }
+    .toast-msg.error { border-color: var(--danger); }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .alert-banner {
+      background: rgba(227, 161, 61, 0.08);
+      border: 1px solid rgba(227, 161, 61, 0.3);
+      padding: 1rem 1.2rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+<!-- 1. LOGIN SCREEN -->
+<div id="authScreen">
+  <div class="login-box">
+    <div style="display:flex; align-items:center; gap:0.6rem; font-family:'JetBrains Mono',monospace; font-size:0.76rem; color:var(--amber); letter-spacing:0.12em; text-transform:uppercase; margin-bottom:0.8rem;">
+      <span style="width:8px; height:8px; border-radius:50%; background:var(--amber);"></span>
+      <span>Control Portal</span>
+    </div>
+
+    <h1 style="font-family:'Fraunces',serif; font-size:2rem; font-weight:500; margin-bottom:0.4rem;">Sign In</h1>
+    <p style="font-size:0.88rem; color:var(--text-dim); margin-bottom:1.8rem;">Enter your admin passcode to manage deadlines and courses.</p>
+
+    <div id="loginError" style="display:none; background:var(--danger-dim); border:1px solid rgba(224,108,117,0.3); color:var(--danger); padding:0.75rem 1rem; border-radius:8px; font-size:0.85rem; margin-bottom:1.2rem;">
+      ⚠️ Invalid admin passcode. Please try again!
+    </div>
+
+    <form id="loginForm" autocomplete="off">
+      <div class="form-group">
+        <label for="passcodeInput">Admin Passcode</label>
+        <input type="password" id="passcodeInput" class="form-control" placeholder="Enter admin passcode" autocomplete="new-password" required autofocus value="">
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width:100%; padding:0.85rem; justify-content:center; margin-top:0.6rem;">
+        <span>Sign In to Portal</span>
+        <span>→</span>
+      </button>
+    </form>
+
+    <div style="margin-top:1.2rem; padding:0.75rem 0.9rem; background:rgba(227,161,61,0.08); border:1px dashed rgba(227,161,61,0.3); border-radius:8px; font-family:'JetBrains Mono',monospace; font-size:0.72rem; color:var(--text-dim); line-height:1.4;">
+      Default Passcode: <strong style="color:var(--amber);">admin123</strong>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; margin-top:1.8rem; padding-top:1.2rem; border-top:1px solid var(--line); font-size:0.8rem;">
+      <a href="index.html" style="color:var(--text-dim); text-decoration:none;">← Main Website</a>
+      <span style="color:var(--text-dim);">Vercel Live</span>
+    </div>
+  </div>
+</div>
+
+<!-- 2. CONTROL PORTAL SCREEN -->
+<div id="portalScreen">
+  <header class="portal-nav">
+    <div class="nav-brand">
+      <span class="brand-dot"></span>
+      <span class="brand-title">Maut Ka Khel</span>
+      <span class="brand-tag">Control Portal</span>
+    </div>
+
+    <div class="nav-actions">
+      <a href="index.html" target="_blank" class="btn">
+        <span>👁️</span>
+        <span>View Website</span>
+      </a>
+      <button class="btn" onclick="openDatabaseModal()">
+        <span>⚡</span>
+        <span>Database Config</span>
+      </button>
+      <button class="btn btn-danger" onclick="logoutAdmin()">
+        <span>🚪</span>
+        <span>Logout</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="portal-main">
+    <!-- Stats Ribbon -->
+    <div class="stats-ribbon">
+      <div class="stat-card" style="--stat-color: var(--amber);">
+        <div class="stat-val" id="statRemaining">—</div>
+        <div class="stat-name">Remaining Deadlines</div>
+      </div>
+      <div class="stat-card" style="--stat-color: var(--done);">
+        <div class="stat-val" id="statCompleted">—</div>
+        <div class="stat-name">Completed Deadlines</div>
+      </div>
+      <div class="stat-card" style="--stat-color: #3fa796;">
+        <div class="stat-val" id="statTotal">—</div>
+        <div class="stat-name">Total Deadlines</div>
+      </div>
+      <div class="stat-card" style="--stat-color: #8f7fe8;">
+        <div class="stat-val" id="statCourses">—</div>
+        <div class="stat-name">Total Courses</div>
+      </div>
+    </div>
+
+    <!-- Tabs Navigation -->
+    <div class="tabs-bar">
+      <button class="tab-btn active" data-tab="tab-tasks">
+        <span>📋 Deadlines & Routine</span>
+        <span class="tab-count" id="taskTabBadge">0</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-courses">
+        <span>🏷️ Course Management</span>
+        <span class="tab-count" id="courseTabBadge">0</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-settings">
+        <span>⚙️ Site Settings</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-database">
+        <span>⚡ Cloud Database</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-security">
+        <span>🔒 Security & Passcode</span>
+      </button>
+    </div>
+
+    <!-- TAB 1: Tasks -->
+    <section id="tab-tasks" class="section-content active">
+      <div class="controls-header">
+        <div class="search-filter-row">
+          <input type="text" id="taskSearch" class="search-input" placeholder="🔍 Search deadline or course...">
+          
+          <select id="courseFilter" class="filter-select">
+            <option value="">All Courses</option>
+          </select>
+
+          <select id="statusFilter" class="filter-select">
+            <option value="">All Statuses</option>
+            <option value="pending">Pending</option>
+            <option value="done">Completed (Done)</option>
+          </select>
+        </div>
+
+        <button class="btn btn-primary" onclick="openAddTaskModal()">
+          <span>➕ Add New Deadline</span>
+        </button>
+      </div>
+
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width: 50px;">Done</th>
+              <th>Due Date</th>
+              <th>Course</th>
+              <th>Task Title</th>
+              <th>Status</th>
+              <th style="text-align: right; width: 140px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tasksTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- TAB 2: Courses -->
+    <section id="tab-courses" class="section-content">
+      <div class="controls-header">
+        <div>
+          <h2 style="font-family:'Fraunces',serif; font-size:1.4rem;">Courses & Categories</h2>
+          <p style="font-size:0.85rem; color:var(--text-dim);">Add new courses, set badge colors, and assign tasks to them.</p>
+        </div>
+        <button class="btn btn-primary" onclick="openAddCourseModal()">
+          <span>➕ Add New Course</span>
+        </button>
+      </div>
+
+      <div class="courses-grid" id="coursesGrid"></div>
+    </section>
+
+    <!-- TAB 3: Settings -->
+    <section id="tab-settings" class="section-content">
+      <div class="settings-panel">
+        <h2 style="font-family:'Fraunces',serif; font-size:1.4rem; margin-bottom: 0.4rem;">Website Settings</h2>
+        <p style="font-size:0.85rem; color:var(--text-dim); margin-bottom: 1.8rem;">Customize the semester header, main headline, and visitor interaction permissions.</p>
+
+        <form id="settingsForm">
+          <div class="form-group">
+            <label for="eyebrowInput">Semester / Term Header (Eyebrow)</label>
+            <input type="text" id="eyebrowInput" class="form-control" placeholder="e.g. Summer term · Aug – Sep 2026">
+          </div>
+
+          <div class="form-group">
+            <label for="heroTitleInput">Main Headline Title (HTML allowed, e.g. &lt;em&gt;)</label>
+            <input type="text" id="heroTitleInput" class="form-control" placeholder="e.g. Everything due,<br>in <em>one line</em>.">
+          </div>
+
+          <div class="form-group">
+            <label for="heroSubtitleInput">Subtitle / Description</label>
+            <input type="text" id="heroSubtitleInput" class="form-control">
+          </div>
+
+          <div class="form-group">
+            <label>Can visitors on the public website toggle task completion?</label>
+            <div style="display:flex; gap:1.2rem; align-items:center; margin-top:0.4rem;">
+              <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
+                <input type="radio" name="allow_public_toggle" value="1" checked>
+                <span>Yes (public toggles save & sync for everyone)</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
+                <input type="radio" name="allow_public_toggle" value="0">
+                <span>No (controlled via Admin Portal only)</span>
+              </label>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="margin-top: 0.8rem;">
+            <span>Save Settings</span>
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- TAB 4: Cloud Database (Supabase) -->
+    <section id="tab-database" class="section-content">
+      <div class="settings-panel">
+        <h2 style="font-family:'Fraunces',serif; font-size:1.4rem; margin-bottom: 0.4rem;">⚡ Cloud Database (Supabase)</h2>
+        <p style="font-size:0.85rem; color:var(--text-dim); margin-bottom: 1.6rem;">
+          Connect your free Supabase project to enable multi-device sync and real-time updates for Vercel.
+        </p>
+
+        <div class="alert-banner">
+          <strong>How to connect in 2 minutes:</strong><br>
+          1. Go to <a href="https://supabase.com" target="_blank" style="color:var(--amber);">supabase.com</a> & create a free project.<br>
+          2. Open the <strong>SQL Editor</strong> in Supabase and paste the contents of <code>supabase_schema.sql</code>.<br>
+          3. Go to <strong>Project Settings > API</strong> and paste your <strong>Project URL</strong> and <strong>anon key</strong> below.
+        </div>
+
+        <form id="dbConfigForm">
+          <div class="form-group">
+            <label for="supabaseUrlInput">Supabase Project URL</label>
+            <input type="text" id="supabaseUrlInput" class="form-control" placeholder="https://xyzproject.supabase.co">
+          </div>
+
+          <div class="form-group">
+            <label for="supabaseKeyInput">Supabase Anon Public API Key</label>
+            <input type="password" id="supabaseKeyInput" class="form-control" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6...">
+          </div>
+
+          <div style="display:flex; gap:0.8rem; margin-top:1.2rem;">
+            <button type="submit" class="btn btn-primary">
+              <span>Save & Connect</span>
+            </button>
+            <button type="button" class="btn btn-danger" onclick="disconnectSupabase()">
+              <span>Clear / Use Local</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- TAB 5: Security -->
+    <section id="tab-security" class="section-content">
+      <div class="settings-panel">
+        <h2 style="font-family:'Fraunces',serif; font-size:1.4rem; margin-bottom: 0.4rem;">Admin Passcode</h2>
+        <p style="font-size:0.85rem; color:var(--text-dim); margin-bottom: 1.8rem;">Change the password required to access this portal.</p>
+
+        <form id="passcodeForm">
+          <div class="form-group">
+            <label for="oldPasscode">Current Passcode</label>
+            <input type="password" id="oldPasscode" class="form-control" required placeholder="Enter current passcode">
+          </div>
+
+          <div class="form-group">
+            <label for="newPasscode">New Passcode</label>
+            <input type="password" id="newPasscode" class="form-control" required placeholder="Minimum 4 characters">
+          </div>
+
+          <div class="form-group">
+            <label for="confirmPasscode">Confirm New Passcode</label>
+            <input type="password" id="confirmPasscode" class="form-control" required placeholder="Re-enter new passcode">
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="margin-top: 0.8rem;">
+            <span>Update Passcode</span>
+          </button>
+        </form>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Modal: Add/Edit Task -->
+<div class="modal-backdrop" id="taskModal">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h3 class="modal-title" id="taskModalTitle">Add New Deadline</h3>
+      <button class="modal-close" onclick="closeModal('taskModal')">✕</button>
+    </div>
+
+    <form id="taskForm">
+      <input type="hidden" id="taskId" value="">
+
+      <div class="form-group">
+        <label for="taskCourseSelect">Select Course</label>
+        <select id="taskCourseSelect" class="form-control" required></select>
+      </div>
+
+      <div class="form-group">
+        <label for="taskTitleInput">Task / Deadline Title</label>
+        <input type="text" id="taskTitleInput" class="form-control" placeholder="e.g. Lab report 3, Presentation, CT-2" required>
+      </div>
+
+      <div class="form-group">
+        <label for="taskDateInput">Due Date</label>
+        <input type="date" id="taskDateInput" class="form-control" required>
+      </div>
+
+      <div class="form-group" style="display:flex; align-items:center; gap:0.6rem; margin-top:0.4rem;">
+        <input type="checkbox" id="taskDoneInput" style="width:18px; height:18px; accent-color:var(--amber);">
+        <label for="taskDoneInput" style="margin:0; text-transform:none; cursor:pointer;">Task already completed (Mark as Done)</label>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn" onclick="closeModal('taskModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Deadline</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Add/Edit Course -->
+<div class="modal-backdrop" id="courseModal">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h3 class="modal-title" id="courseModalTitle">Add New Course</h3>
+      <button class="modal-close" onclick="closeModal('courseModal')">✕</button>
+    </div>
+
+    <form id="courseForm">
+      <input type="hidden" id="courseId" value="">
+
+      <div class="form-group">
+        <label for="courseCodeInput">Course Code (e.g. chem, ml, dc)</label>
+        <input type="text" id="courseCodeInput" class="form-control" placeholder="e.g. cse301, ai, se" required>
+      </div>
+
+      <div class="form-group">
+        <label for="courseNameInput">Course Full Name</label>
+        <input type="text" id="courseNameInput" class="form-control" placeholder="e.g. Machine Learning Lab" required>
+      </div>
+
+      <div class="form-group">
+        <label for="courseColorInput">Badge Accent Color</label>
+        <div style="display:flex; gap:0.6rem; align-items:center;">
+          <input type="color" id="courseColorInput" value="#e3a13d" style="width:50px; height:38px; border:none; background:none; cursor:pointer;">
+          <input type="text" id="courseColorHex" class="form-control" value="#e3a13d" style="width:120px; font-family:'JetBrains Mono',monospace;">
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn" onclick="closeModal('courseModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Course</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script type="module">
+import { 
+  fetchAllData, 
+  addTask, 
+  updateTask, 
+  toggleTaskDone, 
+  deleteTask, 
+  addCourse, 
+  updateCourse, 
+  deleteCourse, 
+  saveSettings,
+  subscribeToChanges
+} from "./js/supabase-client.js";
+import { getSupabaseConfig, saveSupabaseConfig, clearSupabaseConfig } from "./js/config.js";
+
+let state = {
+  courses: [],
+  tasks: [],
+  settings: {},
+  isLive: false
+};
+
+// Check Auth
+function isAuthenticated() {
+  return sessionStorage.getItem('maut_admin_auth') === 'true';
+}
+
+function checkAuthState() {
+  if (isAuthenticated()) {
+    document.getElementById('authScreen').style.display = 'none';
+    document.getElementById('portalScreen').style.display = 'flex';
+    loadData();
+  } else {
+    document.getElementById('authScreen').style.display = 'flex';
+    document.getElementById('portalScreen').style.display = 'none';
+    const passInput = document.getElementById('passcodeInput');
+    if (passInput) passInput.value = '';
+  }
+}
+
+// Login
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const inputPass = document.getElementById('passcodeInput').value;
+  
+  // Fetch current passcode
+  const data = await fetchAllData();
+  const correctPass = (data.settings && data.settings.admin_passcode) || 'admin123';
+
+  if (inputPass === correctPass) {
+    sessionStorage.setItem('maut_admin_auth', 'true');
+    document.getElementById('loginError').style.display = 'none';
+    checkAuthState();
+    showToast("Signed in successfully!");
+  } else {
+    document.getElementById('loginError').style.display = 'block';
+  }
+});
+
+window.logoutAdmin = function() {
+  sessionStorage.removeItem('maut_admin_auth');
+  checkAuthState();
+};
+
+window.openDatabaseModal = function() {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.section-content').forEach(s => s.classList.remove('active'));
+  document.querySelector('[data-tab="tab-database"]').classList.add('active');
+  document.getElementById('tab-database').classList.add('active');
+};
+
+// Toast
+function showToast(msg, isError = false) {
+  const container = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = 'toast-msg' + (isError ? ' error' : '');
+  t.innerHTML = `<span>${isError ? '❌' : '✓'}</span><span>${msg}</span>`;
+  container.appendChild(t);
+  setTimeout(() => {
+    t.style.opacity = '0';
+    t.style.transform = 'translateY(10px)';
+    t.style.transition = 'all 0.3s ease';
+    setTimeout(() => t.remove(), 300);
+  }, 3500);
+}
+
+window.closeModal = function(id) {
+  document.getElementById(id).classList.remove('open');
+};
+
+// Color sync
+document.getElementById('courseColorInput').addEventListener('input', (e) => {
+  document.getElementById('courseColorHex').value = e.target.value;
+});
+document.getElementById('courseColorHex').addEventListener('input', (e) => {
+  if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) {
+    document.getElementById('courseColorInput').value = e.target.value;
+  }
+});
+
+// Tabs
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.section-content').forEach(s => s.classList.remove('active'));
+    btn.classList.add('active');
+    const target = btn.getAttribute('data-tab');
+    document.getElementById(target).classList.add('active');
+  });
+});
+
+// Load Data
+async function loadData() {
+  const data = await fetchAllData();
+  state.courses = data.courses;
+  state.tasks = data.tasks;
+  state.settings = data.settings;
+  state.isLive = data.isLive;
+
+  updateStats();
+  updateCoursesUI();
+  renderTasksTable();
+  populateSettingsForm();
+  populateDbForm();
+}
+
+function updateStats() {
+  const total = state.tasks.length;
+  const done = state.tasks.filter(t => t.is_done).length;
+  const remaining = total - done;
+
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statCompleted').textContent = done;
+  document.getElementById('statRemaining').textContent = remaining;
+  document.getElementById('statCourses').textContent = state.courses.length;
+
+  document.getElementById('taskTabBadge').textContent = total;
+  document.getElementById('courseTabBadge').textContent = state.courses.length;
+}
+
+function updateCoursesUI() {
+  const sel = document.getElementById('taskCourseSelect');
+  const filterSel = document.getElementById('courseFilter');
+  const currentFilter = filterSel.value;
+
+  sel.innerHTML = '';
+  filterSel.innerHTML = '<option value="">All Courses</option>';
+
+  state.courses.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.code;
+    opt.textContent = `${c.name} (${c.code})`;
+    sel.appendChild(opt);
+
+    const fOpt = document.createElement('option');
+    fOpt.value = c.code;
+    fOpt.textContent = `${c.name} (${c.code})`;
+    filterSel.appendChild(fOpt);
+  });
+  filterSel.value = currentFilter;
+
+  // Grid
+  const grid = document.getElementById('coursesGrid');
+  grid.innerHTML = '';
+
+  state.courses.forEach(c => {
+    const count = state.tasks.filter(t => t.course_code === c.code).length;
+    const card = document.createElement('div');
+    card.className = 'course-item-card';
+    card.style.setProperty('--c-color', c.color);
+    card.style.setProperty('--c-dim', c.dim_color || 'rgba(255,255,255,0.05)');
+
+    card.innerHTML = `
+      <div class="course-card-top">
+        <span class="course-code-badge">${c.code}</span>
+        <div style="display:flex; gap:0.4rem;">
+          <button class="btn" style="padding:0.3rem 0.6rem; font-size:0.75rem;" onclick="openEditCourseModal(${c.id})">Edit</button>
+          <button class="btn btn-danger" style="padding:0.3rem 0.6rem; font-size:0.75rem;" onclick="handleDeleteCourse(${c.id}, '${c.code}')">Delete</button>
+        </div>
+      </div>
+      <div>
+        <div class="course-name-text">${escapeHtml(c.name)}</div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:var(--text-dim); margin-top:0.3rem;">
+          ${count} active task(s)
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:0.5rem; font-size:0.72rem; font-family:'JetBrains Mono',monospace; color:var(--text-dim); margin-top:auto;">
+        <span style="width:14px; height:14px; border-radius:50%; background:${c.color}; display:inline-block;"></span>
+        <span>${c.color}</span>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function renderTasksTable() {
+  const tbody = document.getElementById('tasksTableBody');
+  const search = document.getElementById('taskSearch').value.toLowerCase().trim();
+  const courseFilter = document.getElementById('courseFilter').value;
+  const statusFilter = document.getElementById('statusFilter').value;
+
+  const filtered = state.tasks.filter(t => {
+    if (search) {
+      const matchTitle = (t.title || '').toLowerCase().includes(search);
+      const matchCode = (t.course_code || '').toLowerCase().includes(search);
+      if (!matchTitle && !matchCode) return false;
+    }
+    if (courseFilter && t.course_code !== courseFilter) return false;
+    if (statusFilter === 'pending' && t.is_done) return false;
+    if (statusFilter === 'done' && !t.is_done) return false;
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:2rem; color:var(--text-dim);">No deadlines found</td></tr>`;
+    return;
+  }
+
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  tbody.innerHTML = filtered.map(t => {
+    const course = state.courses.find(c => c.code === t.course_code) || { name: t.course_code, color: '#e3a13d', dim_color: 'rgba(227,161,61,0.1)' };
+    const taskDate = new Date(t.deadline_date + 'T00:00:00');
+    const diffDays = Math.round((taskDate - today) / (1000 * 60 * 60 * 24));
+
+    let statusHtml = '';
+    if (t.is_done) {
+      statusHtml = `<span class="status-badge done">✓ Completed</span>`;
+    } else if (diffDays < 0) {
+      const p = Math.abs(diffDays);
+      statusHtml = `<span class="status-badge urgent">Overdue (${p} day${p === 1 ? '' : 's'} ago)</span>`;
+    } else if (diffDays === 0) {
+      statusHtml = `<span class="status-badge urgent">Due Today</span>`;
+    } else if (diffDays === 1) {
+      statusHtml = `<span class="status-badge urgent">Due Tomorrow (1 day left)</span>`;
+    } else {
+      statusHtml = `<span class="status-badge pending">${diffDays} days left</span>`;
+    }
+
+    return `
+      <tr style="${t.is_done ? 'opacity: 0.65;' : ''}">
+        <td>
+          <button class="done-toggle-btn ${t.is_done ? 'is-checked' : ''}" onclick="handleToggleTask(${t.id}, ${!t.is_done})">✓</button>
+        </td>
+        <td style="font-family:'JetBrains Mono',monospace; font-size:0.85rem; white-space:nowrap;">
+          <strong>${formatDate(t.deadline_date)}</strong>
+        </td>
+        <td>
+          <span class="course-pill" style="background:${course.dim_color}; color:${course.color}; border:1px solid ${course.color}40;">
+            <span style="width:6px; height:6px; border-radius:50%; background:${course.color};"></span>
+            ${escapeHtml(course.name)}
+          </span>
+        </td>
+        <td>
+          <div style="font-weight:500; font-size:0.95rem; ${t.is_done ? 'text-decoration:line-through;' : ''}">${escapeHtml(t.title)}</div>
+        </td>
+        <td>${statusHtml}</td>
+        <td style="text-align: right; white-space: nowrap;">
+          <button class="btn" style="padding:0.35rem 0.65rem; font-size:0.75rem;" onclick="openEditTaskModal(${t.id})">Edit</button>
+          <button class="btn btn-danger" style="padding:0.35rem 0.65rem; font-size:0.75rem;" onclick="handleDeleteTask(${t.id})">Delete</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+  const d = new Date(parts[0], parts[1] - 1, parts[2]);
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${d.getDate()} ${months[d.getMonth()]}, ${d.getFullYear()}`;
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/[&<>'"]/g, 
+    tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+  );
+}
+
+document.getElementById('taskSearch').addEventListener('input', renderTasksTable);
+document.getElementById('courseFilter').addEventListener('change', renderTasksTable);
+document.getElementById('statusFilter').addEventListener('change', renderTasksTable);
+
+// Task Modal
+window.openAddTaskModal = function() {
+  document.getElementById('taskModalTitle').textContent = 'Add New Deadline';
+  document.getElementById('taskId').value = '';
+  document.getElementById('taskTitleInput').value = '';
+  document.getElementById('taskDateInput').value = new Date().toISOString().split('T')[0];
+  document.getElementById('taskDoneInput').checked = false;
+  if (state.courses.length > 0) {
+    document.getElementById('taskCourseSelect').value = state.courses[0].code;
+  }
+  document.getElementById('taskModal').classList.add('open');
+};
+
+window.openEditTaskModal = function(id) {
+  const t = state.tasks.find(x => x.id == id);
+  if (!t) return;
+  document.getElementById('taskModalTitle').textContent = 'Edit Deadline';
+  document.getElementById('taskId').value = t.id;
+  document.getElementById('taskCourseSelect').value = t.course_code;
+  document.getElementById('taskTitleInput').value = t.title;
+  document.getElementById('taskDateInput').value = t.deadline_date;
+  document.getElementById('taskDoneInput').checked = !!t.is_done;
+  document.getElementById('taskModal').classList.add('open');
+};
+
+document.getElementById('taskForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const id = document.getElementById('taskId').value;
+  const course_code = document.getElementById('taskCourseSelect').value;
+  const title = document.getElementById('taskTitleInput').value.trim();
+  const deadline_date = document.getElementById('taskDateInput').value;
+  const is_done = document.getElementById('taskDoneInput').checked;
+
+  try {
+    if (id) {
+      await updateTask(id, { course_code, title, deadline_date, is_done });
+      showToast('Deadline updated successfully!');
+    } else {
+      await addTask({ course_code, title, deadline_date, is_done });
+      showToast('Deadline added successfully!');
+    }
+    closeModal('taskModal');
+    await loadData();
+  } catch (err) {
+    showToast('Failed to save task: ' + err.message, true);
+  }
+});
+
+window.handleToggleTask = async function(id, is_done) {
+  try {
+    await toggleTaskDone(id, is_done);
+    await loadData();
+    showToast(is_done ? 'Marked as completed' : 'Marked as pending');
+  } catch (err) {
+    showToast('Failed to update status', true);
+  }
+};
+
+window.handleDeleteTask = async function(id) {
+  if (!confirm('Are you sure you want to delete this deadline?')) return;
+  try {
+    await deleteTask(id);
+    await loadData();
+    showToast('Deadline deleted successfully!');
+  } catch (err) {
+    showToast('Failed to delete: ' + err.message, true);
+  }
+};
+
+// Course Modal
+window.openAddCourseModal = function() {
+  document.getElementById('courseModalTitle').textContent = 'Add New Course';
+  document.getElementById('courseId').value = '';
+  document.getElementById('courseCodeInput').value = '';
+  document.getElementById('courseCodeInput').disabled = false;
+  document.getElementById('courseNameInput').value = '';
+  document.getElementById('courseColorInput').value = '#e3a13d';
+  document.getElementById('courseColorHex').value = '#e3a13d';
+  document.getElementById('courseModal').classList.add('open');
+};
+
+window.openEditCourseModal = function(id) {
+  const c = state.courses.find(x => x.id == id);
+  if (!c) return;
+  document.getElementById('courseModalTitle').textContent = 'Edit Course';
+  document.getElementById('courseId').value = c.id;
+  document.getElementById('courseCodeInput').value = c.code;
+  document.getElementById('courseCodeInput').disabled = true;
+  document.getElementById('courseNameInput').value = c.name;
+  document.getElementById('courseColorInput').value = c.color;
+  document.getElementById('courseColorHex').value = c.color;
+  document.getElementById('courseModal').classList.add('open');
+};
+
+document.getElementById('courseForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const id = document.getElementById('courseId').value;
+  const code = document.getElementById('courseCodeInput').value.trim().toLowerCase();
+  const name = document.getElementById('courseNameInput').value.trim();
+  const color = document.getElementById('courseColorHex').value.trim();
+  const dim_color = adjustColorDim(color);
+
+  try {
+    if (id) {
+      await updateCourse(id, { code, name, color, dim_color });
+      showToast('Course updated successfully!');
+    } else {
+      await addCourse({ code, name, color, dim_color });
+      showToast('Course created successfully!');
+    }
+    closeModal('courseModal');
+    await loadData();
+  } catch (err) {
+    showToast('Failed to save course: ' + err.message, true);
+  }
+});
+
+window.handleDeleteCourse = async function(id, code) {
+  const count = state.tasks.filter(t => t.course_code === code).length;
+  if (count > 0) {
+    if (!confirm(`Warning: There are ${count} active deadline(s) linked to this course. Deleting this course will also delete those deadlines. Are you sure?`)) {
+      return;
+    }
+  } else {
+    if (!confirm('Are you sure you want to delete this course?')) return;
+  }
+
+  try {
+    await deleteCourse(id, code);
+    await loadData();
+    showToast('Course deleted successfully!');
+  } catch (err) {
+    showToast('Failed to delete course: ' + err.message, true);
+  }
+};
+
+function adjustColorDim(hex) {
+  hex = hex.replace('#', '');
+  if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+  if (hex.length !== 6) return '#252525';
+  const r = Math.round(parseInt(hex.substr(0,2), 16) * 0.25);
+  const g = Math.round(parseInt(hex.substr(2,2), 16) * 0.25);
+  const b = Math.round(parseInt(hex.substr(4,2), 16) * 0.25);
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+// Settings Form
+function populateSettingsForm() {
+  document.getElementById('eyebrowInput').value = state.settings.eyebrow || '';
+  document.getElementById('heroTitleInput').value = state.settings.hero_title || '';
+  document.getElementById('heroSubtitleInput').value = state.settings.hero_subtitle || '';
+  const radio = document.querySelector(`input[name="allow_public_toggle"][value="${state.settings.allow_public_toggle || '1'}"]`);
+  if (radio) radio.checked = true;
+}
+
+document.getElementById('settingsForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const eyebrow = document.getElementById('eyebrowInput').value.trim();
+  const hero_title = document.getElementById('heroTitleInput').value.trim();
+  const hero_subtitle = document.getElementById('heroSubtitleInput').value.trim();
+  const allow_public_toggle = document.querySelector('input[name="allow_public_toggle"]:checked').value;
+
+  try {
+    await saveSettings({ eyebrow, hero_title, hero_subtitle, allow_public_toggle });
+    showToast('Website settings saved successfully!');
+    await loadData();
+  } catch (err) {
+    showToast('Failed to save settings: ' + err.message, true);
+  }
+});
+
+// Database Form
+function populateDbForm() {
+  const config = getSupabaseConfig();
+  document.getElementById('supabaseUrlInput').value = config.url || '';
+  document.getElementById('supabaseKeyInput').value = config.anonKey || '';
+}
+
+document.getElementById('dbConfigForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const url = document.getElementById('supabaseUrlInput').value.trim();
+  const key = document.getElementById('supabaseKeyInput').value.trim();
+  if (!url || !key) {
+    showToast('Please provide both URL and Anon key', true);
+    return;
+  }
+  saveSupabaseConfig(url, key);
+  showToast('Supabase configuration saved! Reloading...');
+  setTimeout(() => window.location.reload(), 1000);
+});
+
+window.disconnectSupabase = function() {
+  if (confirm('Clear Supabase configuration and switch to local standalone mode?')) {
+    clearSupabaseConfig();
+    showToast('Switched to standalone mode. Reloading...');
+    setTimeout(() => window.location.reload(), 1000);
+  }
+};
+
+// Security Form
+document.getElementById('passcodeForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const currentPass = (state.settings && state.settings.admin_passcode) || 'admin123';
+  const oldPass = document.getElementById('oldPasscode').value;
+  const newPass = document.getElementById('newPasscode').value;
+  const confirmPass = document.getElementById('confirmPasscode').value;
+
+  if (oldPass !== currentPass) {
+    showToast('Current passcode is incorrect!', true);
+    return;
+  }
+  if (newPass !== confirmPass) {
+    showToast('New passcodes do not match!', true);
+    return;
+  }
+  if (newPass.length < 4) {
+    showToast('Passcode must be at least 4 characters!', true);
+    return;
+  }
+
+  try {
+    await saveSettings({ admin_passcode: newPass });
+    showToast('Admin passcode updated successfully!');
+    document.getElementById('oldPasscode').value = '';
+    document.getElementById('newPasscode').value = '';
+    document.getElementById('confirmPasscode').value = '';
+  } catch (err) {
+    showToast('Failed to update passcode', true);
+  }
+});
+
+// Realtime
+subscribeToChanges(() => {
+  loadData();
+});
+
+// Start
+checkAuthState();
+</script>
+</body>
+</html>
