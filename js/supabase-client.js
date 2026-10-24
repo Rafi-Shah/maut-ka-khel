@@ -304,17 +304,33 @@ export async function deleteTask(id) {
 // Course Actions
 export async function addCourse({ code, name, color, dim_color }) {
   const client = getClient();
-  const sort_order = Date.now();
   let newCourse = null;
 
   if (client) {
+    // Generate next sequential integer for sort_order (fits in standard INT)
+    let nextSort = 1;
+    try {
+      const { data: courses } = await client
+        .from('courses')
+        .select('sort_order')
+        .order('sort_order', { ascending: false })
+        .limit(1);
+      if (courses && courses.length > 0 && typeof courses[0].sort_order === 'number') {
+        nextSort = courses[0].sort_order + 1;
+      }
+    } catch (e) {
+      nextSort = Math.floor(Date.now() / 1000) % 100000;
+    }
+
     const { data, error } = await client.from('courses').insert([
-      { code, name, color, dim_color, sort_order }
+      { code, name, color, dim_color, sort_order: nextSort }
     ]).select();
     if (error) throw error;
     newCourse = data[0];
   } else {
-    newCourse = { id: Date.now(), code, name, color, dim_color, sort_order };
+    const store = getLocalStore();
+    const nextSort = store.courses.length + 1;
+    newCourse = { id: Date.now(), code, name, color, dim_color, sort_order: nextSort };
   }
 
   const store = getLocalStore();

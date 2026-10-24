@@ -15,7 +15,7 @@ CREATE TABLE public.courses (
     name TEXT NOT NULL,
     color TEXT NOT NULL,
     dim_color TEXT NOT NULL,
-    sort_order INT DEFAULT 0,
+    sort_order BIGINT DEFAULT 0,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
