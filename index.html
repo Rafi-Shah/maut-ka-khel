@@ -600,7 +600,7 @@ rowsEl.addEventListener('click', async (e) => {
     return;
   }
 
-  const task = state.tasks.find(t => t.id == id);
+  const task = state.tasks.find(t => t.id == id || t.task_uid == id);
   if (!task) return;
 
   const nextVal = !task.is_done;

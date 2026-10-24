@@ -5,7 +5,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getSupabaseConfig } from "./config.js";
 
-// Default Initial Seed Data (used before Supabase credentials or as fallback)
+// Default Initial Seed Data (used for initial setup or offline fallback)
 export const INITIAL_DATA = {
   courses: [
     { id: 1, code: 'pe',    name: 'Professional English',     color: '#d8735a', dim_color: '#3a2620', sort_order: 1 },
@@ -31,7 +31,7 @@ export const INITIAL_DATA = {
     { id: 13, task_uid: 'dclab-project-presentation', course_code: 'dclab', title: 'Project Presentation',             deadline_date: '2026-08-28', is_done: false },
     { id: 14, task_uid: 'idp-final-report',           course_code: 'idp',   title: 'Final project report',             deadline_date: '2026-08-30', is_done: false },
     { id: 15, task_uid: 'mllab-lab-final',            course_code: 'mllab', title: 'Lab Final',                        deadline_date: '2026-08-30', is_done: false },
-    { id: 16, task_uid: 'dclab-lab-final',            course_code: 'dclab', title: 'Lab Final',                        deadline_date: '2026-08-31', is_done: false },
+    { id: 16, task_uid: 'dclab-lab-final',             course_code: 'dclab', title: 'Lab Final',                        deadline_date: '2026-08-31', is_done: false },
     { id: 17, task_uid: 'dclab-project-report',       course_code: 'dclab', title: 'Project report',                  deadline_date: '2026-09-01', is_done: false },
     { id: 18, task_uid: 'idp-poster-presentation',    course_code: 'idp',   title: 'Poster Presentation',              deadline_date: '2026-09-01', is_done: false },
     { id: 19, task_uid: 'dc-assignment',              course_code: 'dc',    title: 'Assignment',                       deadline_date: '2026-09-02', is_done: false },
@@ -44,7 +44,8 @@ export const INITIAL_DATA = {
     hero_title: 'Everything due,<br>in <em>one line</em>.',
     hero_subtitle: 'Semester routine & deadline ledger tracker',
     allow_public_toggle: '1',
-    admin_passcode: 'admin123'
+    admin_passcode: 'admin123',
+    db_initialized: 'true'
   }
 };
 
@@ -65,23 +66,82 @@ export function getClient() {
 }
 
 // In-memory or localStorage cache for offline/standalone mode
-function getLocalStore() {
+export function getLocalStore() {
   const data = localStorage.getItem('maut_local_store');
   if (data) {
-    try { return JSON.parse(data); } catch (e) {}
+    try {
+      const parsed = JSON.parse(data);
+      if (parsed && Array.isArray(parsed.courses) && Array.isArray(parsed.tasks)) {
+        return parsed;
+      }
+    } catch (e) {}
   }
-  return JSON.parse(JSON.stringify(INITIAL_DATA));
+  const initial = JSON.parse(JSON.stringify(INITIAL_DATA));
+  localStorage.setItem('maut_local_store', JSON.stringify(initial));
+  return initial;
 }
 
-function saveLocalStore(store) {
+export function saveLocalStore(store) {
   localStorage.setItem('maut_local_store', JSON.stringify(store));
+}
+
+// Auto-seed Supabase database if tables exist but are empty
+export async function seedSupabaseDatabase(client) {
+  if (!client) throw new Error("Supabase client is not initialized");
+
+  // 1. Seed courses
+  const coursesPayload = INITIAL_DATA.courses.map(c => ({
+    code: c.code,
+    name: c.name,
+    color: c.color,
+    dim_color: c.dim_color,
+    sort_order: c.sort_order
+  }));
+  const { error: coursesErr } = await client.from('courses').upsert(coursesPayload, { onConflict: 'code' });
+  if (coursesErr) throw coursesErr;
+
+  // 2. Seed settings
+  const settingsRows = Object.entries(INITIAL_DATA.settings).map(([k, v]) => ({
+    setting_key: k,
+    setting_value: String(v)
+  }));
+  const { error: settingsErr } = await client.from('settings').upsert(settingsRows, { onConflict: 'setting_key' });
+  if (settingsErr) throw settingsErr;
+
+  // 3. Check if tasks already exist
+  const { data: existingTasks } = await client.from('tasks').select('id').limit(1);
+  if (!existingTasks || existingTasks.length === 0) {
+    const tasksPayload = INITIAL_DATA.tasks.map(t => ({
+      task_uid: t.task_uid,
+      course_code: t.course_code,
+      title: t.title,
+      deadline_date: t.deadline_date,
+      is_done: !!t.is_done
+    }));
+    const { error: tasksErr } = await client.from('tasks').insert(tasksPayload);
+    if (tasksErr) throw tasksErr;
+  }
+}
+
+// Reset entire database to default initial state
+export async function resetDatabaseToDefaults() {
+  const client = getClient();
+  if (client) {
+    // Delete existing rows
+    await client.from('tasks').delete().neq('id', -1);
+    await client.from('courses').delete().neq('id', -1);
+    await seedSupabaseDatabase(client);
+  }
+  const initial = JSON.parse(JSON.stringify(INITIAL_DATA));
+  saveLocalStore(initial);
+  return initial;
 }
 
 // Read All Data
 export async function fetchAllData() {
   const client = getClient();
   if (!client) {
-    return { ...getLocalStore(), isLive: false };
+    return { ...getLocalStore(), isLive: false, status: 'standalone' };
   }
 
   try {
@@ -91,27 +151,50 @@ export async function fetchAllData() {
       client.from('settings').select('*')
     ]);
 
-    if (coursesRes.error || tasksRes.error) {
-      throw coursesRes.error || tasksRes.error;
-    }
+    if (coursesRes.error) throw coursesRes.error;
+    if (tasksRes.error) throw tasksRes.error;
 
     const settingsMap = { ...INITIAL_DATA.settings };
     (settingsRes.data || []).forEach(r => {
       settingsMap[r.setting_key] = r.setting_value;
     });
 
-    const courses = coursesRes.data.length ? coursesRes.data : INITIAL_DATA.courses;
-    const tasks = tasksRes.data.length ? tasksRes.data : INITIAL_DATA.tasks;
+    let courses = coursesRes.data || [];
+    let tasks = tasksRes.data || [];
+
+    // If Supabase database is completely unseeded, auto-seed initial data
+    const hasAnyRows = courses.length > 0 || tasks.length > 0 || (settingsRes.data && settingsRes.data.length > 0);
+    const isInitMarked = settingsMap.db_initialized === 'true';
+
+    if (!hasAnyRows && !isInitMarked) {
+      try {
+        console.log("Supabase database empty. Auto-seeding initial defaults...");
+        await seedSupabaseDatabase(client);
+        const [freshCourses, freshTasks] = await Promise.all([
+          client.from('courses').select('*').order('sort_order', { ascending: true }),
+          client.from('tasks').select('*').order('deadline_date', { ascending: true })
+        ]);
+        courses = freshCourses.data || INITIAL_DATA.courses;
+        tasks = freshTasks.data || INITIAL_DATA.tasks;
+      } catch (seedErr) {
+        console.warn("Auto-seeding Supabase failed:", seedErr);
+        return { ...getLocalStore(), isLive: false, error: seedErr.message, status: 'error' };
+      }
+    }
+
+    // Keep local cache in sync as offline backup
+    saveLocalStore({ courses, tasks, settings: settingsMap });
 
     return {
       courses,
       tasks,
       settings: settingsMap,
-      isLive: true
+      isLive: true,
+      status: 'connected'
     };
   } catch (err) {
-    console.warn("Supabase fetch failed, using local store:", err);
-    return { ...getLocalStore(), isLive: false };
+    console.warn("Supabase fetch failed, falling back to local store:", err);
+    return { ...getLocalStore(), isLive: false, error: err.message, status: 'error' };
   }
 }
 
@@ -119,15 +202,16 @@ export async function fetchAllData() {
 export async function addTask({ course_code, title, deadline_date, is_done }) {
   const client = getClient();
   const task_uid = `${course_code}-${Date.now()}`;
+  let newTask = null;
+
   if (client) {
     const { data, error } = await client.from('tasks').insert([
       { task_uid, course_code, title, deadline_date, is_done: !!is_done }
     ]).select();
     if (error) throw error;
-    return data[0];
+    newTask = data[0];
   } else {
-    const store = getLocalStore();
-    const newTask = {
+    newTask = {
       id: Date.now(),
       task_uid,
       course_code,
@@ -135,88 +219,130 @@ export async function addTask({ course_code, title, deadline_date, is_done }) {
       deadline_date,
       is_done: !!is_done
     };
-    store.tasks.push(newTask);
-    saveLocalStore(store);
-    return newTask;
   }
+
+  // Update local cache
+  const store = getLocalStore();
+  store.tasks.push(newTask);
+  saveLocalStore(store);
+
+  return newTask;
 }
 
 export async function updateTask(id, { course_code, title, deadline_date, is_done }) {
   const client = getClient();
+  const payload = { course_code, title, deadline_date };
+  if (is_done !== undefined) payload.is_done = is_done;
+
   if (client) {
-    const payload = { course_code, title, deadline_date };
-    if (is_done !== undefined) payload.is_done = is_done;
-    const { error } = await client.from('tasks').update(payload).eq('id', id);
-    if (error) throw error;
-  } else {
-    const store = getLocalStore();
-    const idx = store.tasks.findIndex(t => t.id == id);
-    if (idx !== -1) {
-      store.tasks[idx] = { ...store.tasks[idx], course_code, title, deadline_date };
-      if (is_done !== undefined) store.tasks[idx].is_done = is_done;
-      saveLocalStore(store);
+    const isNum = typeof id === 'number' || (!isNaN(Number(id)) && String(Number(id)) === String(id).trim());
+    let error = null;
+    if (isNum) {
+      const res = await client.from('tasks').update(payload).eq('id', Number(id));
+      error = res.error;
+    } else {
+      const res = await client.from('tasks').update(payload).eq('task_uid', String(id));
+      error = res.error;
     }
+    if (error) throw error;
+  }
+
+  // Update local cache
+  const store = getLocalStore();
+  const idx = store.tasks.findIndex(t => t.id == id || t.task_uid == id);
+  if (idx !== -1) {
+    store.tasks[idx] = { ...store.tasks[idx], ...payload };
+    saveLocalStore(store);
   }
 }
 
 export async function toggleTaskDone(id, is_done) {
   const client = getClient();
   if (client) {
-    const { error } = await client.from('tasks').update({ is_done }).eq('id', id);
-    if (error) throw error;
-  } else {
-    const store = getLocalStore();
-    const t = store.tasks.find(x => x.id == id);
-    if (t) {
-      t.is_done = is_done;
-      saveLocalStore(store);
+    const isNum = typeof id === 'number' || (!isNaN(Number(id)) && String(Number(id)) === String(id).trim());
+    let error = null;
+    if (isNum) {
+      const res = await client.from('tasks').update({ is_done }).eq('id', Number(id));
+      error = res.error;
+    } else {
+      const res = await client.from('tasks').update({ is_done }).eq('task_uid', String(id));
+      error = res.error;
     }
+    if (error) throw error;
+  }
+
+  // Update local cache
+  const store = getLocalStore();
+  const t = store.tasks.find(x => x.id == id || x.task_uid == id);
+  if (t) {
+    t.is_done = is_done;
+    saveLocalStore(store);
   }
 }
 
 export async function deleteTask(id) {
   const client = getClient();
   if (client) {
-    const { error } = await client.from('tasks').delete().eq('id', id);
+    const isNum = typeof id === 'number' || (!isNaN(Number(id)) && String(Number(id)) === String(id).trim());
+    let error = null;
+    if (isNum) {
+      const res = await client.from('tasks').delete().eq('id', Number(id));
+      error = res.error;
+    } else {
+      const res = await client.from('tasks').delete().eq('task_uid', String(id));
+      error = res.error;
+    }
     if (error) throw error;
-  } else {
-    const store = getLocalStore();
-    store.tasks = store.tasks.filter(t => t.id != id);
-    saveLocalStore(store);
   }
+
+  // Always update local cache
+  const store = getLocalStore();
+  store.tasks = store.tasks.filter(t => t.id != id && t.task_uid != id);
+  saveLocalStore(store);
 }
 
 // Course Actions
 export async function addCourse({ code, name, color, dim_color }) {
   const client = getClient();
   const sort_order = Date.now();
+  let newCourse = null;
+
   if (client) {
     const { data, error } = await client.from('courses').insert([
       { code, name, color, dim_color, sort_order }
     ]).select();
     if (error) throw error;
-    return data[0];
+    newCourse = data[0];
   } else {
-    const store = getLocalStore();
-    const newCourse = { id: Date.now(), code, name, color, dim_color, sort_order };
-    store.courses.push(newCourse);
-    saveLocalStore(store);
-    return newCourse;
+    newCourse = { id: Date.now(), code, name, color, dim_color, sort_order };
   }
+
+  const store = getLocalStore();
+  store.courses.push(newCourse);
+  saveLocalStore(store);
+  return newCourse;
 }
 
 export async function updateCourse(id, { code, name, color, dim_color }) {
   const client = getClient();
   if (client) {
-    const { error } = await client.from('courses').update({ code, name, color, dim_color }).eq('id', id);
-    if (error) throw error;
-  } else {
-    const store = getLocalStore();
-    const idx = store.courses.findIndex(c => c.id == id);
-    if (idx !== -1) {
-      store.courses[idx] = { ...store.courses[idx], code, name, color, dim_color };
-      saveLocalStore(store);
+    const isNum = typeof id === 'number' || (!isNaN(Number(id)) && String(Number(id)) === String(id).trim());
+    let error = null;
+    if (isNum) {
+      const res = await client.from('courses').update({ code, name, color, dim_color }).eq('id', Number(id));
+      error = res.error;
+    } else {
+      const res = await client.from('courses').update({ code, name, color, dim_color }).eq('code', String(code));
+      error = res.error;
     }
+    if (error) throw error;
+  }
+
+  const store = getLocalStore();
+  const idx = store.courses.findIndex(c => c.id == id || c.code === code);
+  if (idx !== -1) {
+    store.courses[idx] = { ...store.courses[idx], code, name, color, dim_color };
+    saveLocalStore(store);
   }
 }
 
@@ -225,14 +351,22 @@ export async function deleteCourse(id, code) {
   if (client) {
     // Delete linked tasks first
     await client.from('tasks').delete().eq('course_code', code);
-    const { error } = await client.from('courses').delete().eq('id', id);
+    const isNum = typeof id === 'number' || (!isNaN(Number(id)) && String(Number(id)) === String(id).trim());
+    let error = null;
+    if (isNum) {
+      const res = await client.from('courses').delete().eq('id', Number(id));
+      error = res.error;
+    } else {
+      const res = await client.from('courses').delete().eq('code', String(code));
+      error = res.error;
+    }
     if (error) throw error;
-  } else {
-    const store = getLocalStore();
-    store.courses = store.courses.filter(c => c.id != id);
-    store.tasks = store.tasks.filter(t => t.course_code !== code);
-    saveLocalStore(store);
   }
+
+  const store = getLocalStore();
+  store.courses = store.courses.filter(c => c.id != id && c.code !== code);
+  store.tasks = store.tasks.filter(t => t.course_code !== code);
+  saveLocalStore(store);
 }
 
 // Settings Actions
@@ -246,11 +380,11 @@ export async function saveSettings(settingsObj) {
       });
       if (error) throw error;
     }
-  } else {
-    const store = getLocalStore();
-    store.settings = { ...store.settings, ...settingsObj };
-    saveLocalStore(store);
   }
+
+  const store = getLocalStore();
+  store.settings = { ...store.settings, ...settingsObj };
+  saveLocalStore(store);
 }
 
 // Real-time listener
