@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0c110e">
   <title>Admin Portal — Maut Ka Khel</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -393,6 +394,260 @@
       margin-bottom: 1.5rem;
       font-size: 0.85rem;
       line-height: 1.5;
+    }
+
+    /* Mobile & Tablet Responsive Enhancements */
+    * { -webkit-tap-highlight-color: transparent; }
+    button, input, select, textarea { touch-action: manipulation; }
+
+    @media (max-width: 768px) {
+      header.portal-nav {
+        padding: 0.75rem 4vw;
+        gap: 0.7rem;
+      }
+      .nav-brand {
+        gap: 0.5rem;
+      }
+      .brand-title {
+        font-size: 1.15rem;
+      }
+      .brand-tag {
+        font-size: 0.62rem;
+        padding: 0.15rem 0.45rem;
+      }
+      .nav-actions {
+        width: 100%;
+        display: flex;
+        gap: 0.45rem;
+        overflow-x: auto;
+        padding-bottom: 3px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+      .nav-actions::-webkit-scrollbar { display: none; }
+      .nav-actions .btn {
+        font-size: 0.76rem;
+        padding: 0.45rem 0.75rem;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+
+      main.portal-main {
+        padding: 1.2rem 4vw 4rem;
+      }
+
+      .tabs-bar {
+        overflow-x: auto;
+        white-space: nowrap;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        margin-bottom: 1.2rem;
+        gap: 0.3rem;
+      }
+      .tabs-bar::-webkit-scrollbar { display: none; }
+      .tab-btn {
+        padding: 0.65rem 0.85rem;
+        font-size: 0.76rem;
+        flex-shrink: 0;
+      }
+    }
+
+    @media (max-width: 680px) {
+      /* Mobile Dashboard 2x2 Stats Grid */
+      .stats-ribbon {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.65rem;
+        margin-bottom: 1.4rem;
+      }
+      .stat-card {
+        padding: 0.85rem 1rem;
+        border-radius: 8px;
+      }
+      .stat-val {
+        font-size: 1.65rem;
+      }
+      .stat-name {
+        font-size: 0.64rem;
+        letter-spacing: 0.05em;
+        margin-top: 0.25rem;
+      }
+
+      /* Controls & Search */
+      .controls-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+        margin-bottom: 1.2rem;
+      }
+      .search-filter-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+        width: 100%;
+      }
+      .search-input {
+        grid-column: span 2;
+        min-width: 0;
+        width: 100%;
+        font-size: 16px;
+        padding: 0.65rem 0.85rem;
+      }
+      .filter-select {
+        font-size: 16px;
+        padding: 0.65rem 0.75rem;
+        width: 100%;
+      }
+      .controls-header > button.btn-primary {
+        width: 100%;
+        justify-content: center;
+        padding: 0.75rem;
+        font-size: 0.9rem;
+      }
+
+      /* Mobile Card Layout for Deadlines Table */
+      .table-container {
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        overflow: visible;
+      }
+      table.data-table thead {
+        display: none;
+      }
+      table.data-table,
+      table.data-table tbody,
+      table.data-table tr,
+      table.data-table td {
+        display: block;
+        width: 100%;
+      }
+      table.data-table tr {
+        background: var(--card);
+        border: 1px solid var(--card-border);
+        border-radius: 12px;
+        margin-bottom: 0.85rem;
+        padding: 1rem 1.1rem;
+        position: relative;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+      }
+      table.data-table tr:hover td {
+        background: transparent;
+      }
+      table.data-table td {
+        padding: 0.25rem 0;
+        border-bottom: none;
+      }
+      /* Top row of card: Checkbox + Due Date + Course Badge */
+      table.data-table td:nth-child(1) {
+        display: inline-flex;
+        align-items: center;
+        width: auto;
+        margin-right: 0.6rem;
+        vertical-align: middle;
+      }
+      table.data-table td:nth-child(2) {
+        display: inline-flex;
+        align-items: center;
+        width: auto;
+        vertical-align: middle;
+        font-size: 0.84rem;
+        color: var(--amber);
+      }
+      table.data-table td:nth-child(3) {
+        display: inline-flex;
+        margin-left: auto;
+        float: right;
+        width: auto;
+      }
+      /* Middle row: Task title */
+      table.data-table td:nth-child(4) {
+        display: block;
+        clear: both;
+        padding-top: 0.75rem;
+        padding-bottom: 0.5rem;
+        font-size: 1rem;
+        line-height: 1.4;
+      }
+      /* Status Badge */
+      table.data-table td:nth-child(5) {
+        display: inline-block;
+        padding-bottom: 0.75rem;
+      }
+      /* Bottom row: Edit & Delete buttons */
+      table.data-table td:nth-child(6) {
+        display: flex;
+        gap: 0.6rem;
+        border-top: 1px solid var(--line);
+        padding-top: 0.75rem;
+        margin-top: 0.25rem;
+      }
+      table.data-table td:nth-child(6) button {
+        flex: 1;
+        justify-content: center;
+        padding: 0.55rem 0.8rem;
+        font-size: 0.82rem;
+      }
+
+      /* Courses Grid */
+      .courses-grid {
+        grid-template-columns: 1fr;
+        gap: 0.85rem;
+      }
+
+      /* Settings Form */
+      .settings-panel {
+        padding: 1.25rem 1rem;
+        border-radius: 10px;
+      }
+      .form-control {
+        font-size: 16px;
+      }
+
+      /* Modals */
+      .modal-backdrop {
+        padding: 0.75rem;
+      }
+      .modal-dialog {
+        padding: 1.3rem;
+        max-height: 88vh;
+        overflow-y: auto;
+        width: 100%;
+        border-radius: 14px;
+      }
+      .modal-dialog .form-control {
+        font-size: 16px;
+      }
+      .modal-footer {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .modal-footer button {
+        width: 100%;
+        justify-content: center;
+        padding: 0.7rem;
+      }
+
+      /* Toast Notification */
+      .toast-container {
+        left: 16px;
+        right: 16px;
+        bottom: 16px;
+      }
+      .toast-msg {
+        width: 100%;
+        justify-content: center;
+        font-size: 0.82rem;
+      }
+
+      /* Login Screen */
+      #authScreen {
+        padding: 1rem;
+      }
+      .login-box {
+        padding: 1.8rem 1.4rem;
+        border-radius: 12px;
+      }
     }
   </style>
 </head>

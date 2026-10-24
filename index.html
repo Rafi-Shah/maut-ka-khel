@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f1512">
 <title>Semester Ledger — Deadlines</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -282,9 +283,12 @@
     gap: 1rem;
     flex-wrap: wrap;
     cursor: pointer;
-    transition: border-color 0.25s ease, transform 0.25s ease, background 0.25s ease;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: border-color 0.25s ease, transform 0.2s ease, background 0.25s ease;
   }
   .card:hover { border-color: var(--course-color); transform: translateX(4px); background: #1f2a22; }
+  .card:active:not(.locked) { transform: scale(0.985); }
   .card.locked { cursor: default; }
   .card.locked:hover { transform: none; }
 
@@ -372,16 +376,48 @@
   footer a:hover { text-decoration: underline; }
 
   @media (max-width: 640px) {
-    .top-bar { top: 1.2rem; }
-    .row { grid-template-columns: 66px 1fr; gap: 0.9rem; padding: 1.3rem 0; }
-    .spine { left: calc(8vw + 66px); }
-    .node { left: calc(66px - 4px); top: 2.1rem; }
-    .date-col { padding-right: 0.6rem; }
-    .date-col .day { font-size: 1.5rem; }
+    .top-bar { top: 1.2rem; left: 5vw; right: 5vw; }
+    .portal-link-btn { font-size: 0.72rem; padding: 0.4rem 0.85rem; }
+    header.hero { padding: 6vh 5vw 4vh; min-height: 82vh; }
+    h1.title { font-size: clamp(2.1rem, 8.5vw, 3.4rem); margin-top: 0.9rem; }
+    .hero-sub { font-size: 0.92rem; margin-top: 1.1rem; }
+    .hero-stats { gap: 1.4rem 2rem; margin-top: 2.2rem; }
+    .stat .num { font-size: 1.9rem; }
+    .legend { padding: 1.6rem 5vw 0.5rem; gap: 0.45rem 1rem; }
+    .sync-row { padding: 0 5vw 1.6rem; }
+    .timeline { padding: 4vh 5vw 10vh; }
+    .spine { left: calc(5vw + 58px); }
+    .node { left: calc(58px - 4px); top: 1.9rem; width: 8px; height: 8px; }
+    .row { grid-template-columns: 58px 1fr; gap: 0.8rem; padding: 1.2rem 0; }
+    .date-col { padding-right: 0.5rem; }
+    .date-col .day { font-size: 1.55rem; }
     .date-col .mon { font-size: 0.62rem; }
-    .hero-stats { gap: 1.6rem; }
-    .card { padding: 0.8rem 0.9rem; }
+    .card { padding: 0.75rem 0.9rem; gap: 0.7rem; }
+    .check-toggle { width: 22px; height: 22px; }
+    .course-name { font-size: 0.64rem; }
     .task-name { font-size: 0.92rem; }
+    .countdown { font-size: 0.68rem; padding: 0.28rem 0.6rem; margin-left: auto; }
+    footer { padding: 3vh 5vw 5vh; flex-direction: column; text-align: center; gap: 0.6rem; }
+  }
+
+  @media (max-width: 440px) {
+    .top-bar { left: 4vw; right: 4vw; top: 1rem; }
+    header.hero { padding: 5vh 4vw 3vh; min-height: 78vh; }
+    h1.title { font-size: clamp(1.85rem, 8vw, 2.5rem); }
+    .hero-stats { gap: 1rem 1.4rem; }
+    .stat .num { font-size: 1.65rem; }
+    .legend { padding: 1.2rem 4vw 0.4rem; gap: 0.4rem 0.8rem; }
+    .sync-row { padding: 0 4vw 1.4rem; }
+    .timeline { padding: 3vh 4vw 8vh; }
+    .spine { left: calc(4vw + 50px); }
+    .node { left: calc(50px - 4px); top: 1.8rem; width: 7px; height: 7px; }
+    .row { grid-template-columns: 50px 1fr; gap: 0.65rem; padding: 1.1rem 0; }
+    .date-col { padding-right: 0.4rem; }
+    .date-col .day { font-size: 1.35rem; }
+    .date-col .mon { font-size: 0.58rem; letter-spacing: 0.06em; }
+    .card { padding: 0.7rem 0.8rem; gap: 0.5rem; }
+    .task-name { font-size: 0.86rem; }
+    .countdown { font-size: 0.64rem; padding: 0.22rem 0.5rem; }
   }
 
   @media (prefers-reduced-motion: reduce) {
