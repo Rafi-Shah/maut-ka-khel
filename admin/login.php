@@ -271,11 +271,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </button>
   </form>
 
-  <div class="hint-box">
-    Default Login: Username: <strong>admin</strong> | Password: <strong>admin123</strong><br>
-    (You can change your password anytime in the portal settings)
-  </div>
-
   <div class="footer-links">
     <a href="../index.php">← Main Website</a>
     <span style="color: var(--text-dim); font-size:0.75rem;">Maut Ka Khel</span>
