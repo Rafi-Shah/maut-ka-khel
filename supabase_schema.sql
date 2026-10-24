@@ -1,6 +1,6 @@
 -- ==========================================
 -- Maut Ka Khel — Supabase Schema & Seed Data
--- Run this in your Supabase SQL Editor
+-- Safe & Idempotent (can be run multiple times)
 -- ==========================================
 
 -- 1. Courses Table
@@ -34,29 +34,63 @@ CREATE TABLE IF NOT EXISTS public.settings (
 );
 
 -- ==========================================
--- Enable Realtime (for live multi-user sync)
+-- Enable Realtime (Safe check if already added)
 -- ==========================================
-ALTER PUBLICATION supabase_realtime ADD TABLE public.tasks;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.courses;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.settings;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'tasks'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.tasks;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'courses'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.courses;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'settings'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.settings;
+  END IF;
+END $$;
 
 -- ==========================================
 -- Row Level Security (RLS) Policies
--- Allow public read & write with anon key
+-- Safe Drop & Recreate
 -- ==========================================
 ALTER TABLE public.courses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tasks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.settings ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow public read courses" ON public.courses;
+DROP POLICY IF EXISTS "Allow public insert courses" ON public.courses;
+DROP POLICY IF EXISTS "Allow public update courses" ON public.courses;
+DROP POLICY IF EXISTS "Allow public delete courses" ON public.courses;
 
 CREATE POLICY "Allow public read courses" ON public.courses FOR SELECT USING (true);
 CREATE POLICY "Allow public insert courses" ON public.courses FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow public update courses" ON public.courses FOR UPDATE USING (true);
 CREATE POLICY "Allow public delete courses" ON public.courses FOR DELETE USING (true);
 
+DROP POLICY IF EXISTS "Allow public read tasks" ON public.tasks;
+DROP POLICY IF EXISTS "Allow public insert tasks" ON public.tasks;
+DROP POLICY IF EXISTS "Allow public update tasks" ON public.tasks;
+DROP POLICY IF EXISTS "Allow public delete tasks" ON public.tasks;
+
 CREATE POLICY "Allow public read tasks" ON public.tasks FOR SELECT USING (true);
 CREATE POLICY "Allow public insert tasks" ON public.tasks FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow public update tasks" ON public.tasks FOR UPDATE USING (true);
 CREATE POLICY "Allow public delete tasks" ON public.tasks FOR DELETE USING (true);
+
+DROP POLICY IF EXISTS "Allow public read settings" ON public.settings;
+DROP POLICY IF EXISTS "Allow public insert settings" ON public.settings;
+DROP POLICY IF EXISTS "Allow public update settings" ON public.settings;
 
 CREATE POLICY "Allow public read settings" ON public.settings FOR SELECT USING (true);
 CREATE POLICY "Allow public insert settings" ON public.settings FOR INSERT WITH CHECK (true);
