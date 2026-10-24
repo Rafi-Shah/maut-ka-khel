@@ -1,14 +1,13 @@
 /**
  * Supabase Project Configuration
  * 
- * You can set your Supabase Project URL and Anon Key here,
- * or configure it directly in the Admin Portal UI.
+ * Default credentials for multi-device sync (PC, Phone, Vercel).
+ * Custom values can also be overridden in the Admin Portal.
  */
 
 export const DEFAULT_SUPABASE_CONFIG = {
-  // Replace these with your project values from Supabase (Project Settings > API)
-  url: "",
-  anonKey: ""
+  url: "https://ttsfmbshanyieohqwbey.supabase.co",
+  anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR0c2ZtYnNoYW55aWVvaHF3YmV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcyMDg3NTAsImV4cCI6MjEwMjc4NDc1MH0.PQVE4NSh_W6YQbd7QelebEa0g7QW8_u-InNWM9GVHzU"
 };
 
 export function getSupabaseConfig() {
